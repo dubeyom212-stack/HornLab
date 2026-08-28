@@ -1,0 +1,424 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
+
+:root {
+    --ivory: #f6f3ec;
+    --surface: #fcfbf8;
+    --ink: #181713;
+    --muted: #77736a;
+    --line: #e3ded4;
+
+    --brass: #a17b3d;
+    --brass-dark: #765923;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--ivory);
+    color: var(--ink);
+    font-family: "DM Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+/* NAV */
+
+.topbar {
+    height: 74px;
+    padding: 0 5vw;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border-bottom: 1px solid var(--line);
+}
+
+.brand {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.brand span {
+    color: var(--brass);
+}
+
+nav {
+    display: flex;
+    gap: 34px;
+}
+
+nav a {
+    position: relative;
+
+    color: var(--muted);
+    font-size: 12px;
+}
+
+nav a.active {
+    color: var(--ink);
+}
+
+nav a.active::after {
+    content: "";
+
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+
+    width: 18px;
+    height: 1px;
+
+    background: var(--brass);
+
+    transform: translateX(-50%);
+}
+
+.profile {
+    width: 34px;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--line);
+    border-radius: 50%;
+
+    font-size: 10px;
+    font-weight: 600;
+}
+
+
+/* PAGE */
+
+.container {
+    width: min(960px, 88vw);
+    margin: 0 auto;
+    padding: 72px 0 120px;
+}
+
+
+/* HEADER */
+
+.today-header {
+    margin-bottom: 58px;
+}
+
+.label {
+    margin-bottom: 10px;
+
+    color: var(--brass-dark);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.8px;
+}
+
+h1 {
+    font-size: clamp(38px, 5vw, 58px);
+    font-weight: 500;
+    letter-spacing: -2.8px;
+    line-height: 0.98;
+}
+
+h1 em {
+    font-family: "Instrument Serif", serif;
+    font-weight: 400;
+}
+
+.intro {
+    max-width: 520px;
+    margin-top: 20px;
+
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+
+/* SECTIONS */
+
+.time-section,
+.plan-section,
+.prepare-preview {
+    margin-bottom: 26px;
+
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+}
+
+.section-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+h2 {
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+}
+
+
+/* TIME */
+
+.time-options {
+    display: flex;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.time-option {
+    padding: 10px 17px;
+
+    background: transparent;
+
+    border: 1px solid var(--line);
+    border-radius: 6px;
+
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 11px;
+
+    cursor: pointer;
+
+    transition:
+        background 160ms ease,
+        color 160ms ease,
+        border-color 160ms ease;
+}
+
+.time-option:hover {
+    border-color: #c8c0b3;
+    color: var(--ink);
+}
+
+.time-option.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--surface);
+}
+
+
+/* PLAN */
+
+.plan-duration {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.practice-plan {
+    margin-top: 18px;
+
+    border-top: 1px solid var(--line);
+}
+
+.plan-item {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    min-height: 92px;
+
+    border-bottom: 1px solid var(--line);
+}
+
+.plan-number {
+    width: 55px;
+
+    color: var(--brass);
+    font-family: "Instrument Serif", serif;
+    font-size: 20px;
+}
+
+.plan-content {
+    flex: 1;
+}
+
+.plan-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.plan-title-row h3 {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.plan-title-row span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.plan-content p {
+    margin-top: 5px;
+
+    color: var(--ink);
+    font-size: 11px;
+}
+
+.plan-content small {
+    display: block;
+
+    margin-top: 4px;
+
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.plan-item.priority::before {
+    content: "";
+
+    position: absolute;
+    left: -14px;
+
+    width: 2px;
+    height: 38px;
+
+    background: var(--brass);
+}
+
+.priority-mark {
+    margin-left: 20px;
+
+    color: var(--brass-dark);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+
+/* PLAN FOOTER */
+
+.plan-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding-top: 22px;
+}
+
+.plan-footer p {
+    max-width: 420px;
+
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.primary-button {
+    padding: 11px 18px;
+
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 6px;
+
+    color: var(--surface);
+    font-size: 11px;
+    font-weight: 500;
+
+    transition:
+        transform 160ms ease,
+        background 160ms ease;
+}
+
+.primary-button:hover {
+    background: #292720;
+    transform: translateY(-1px);
+}
+
+
+/* PREPARATION */
+
+.quiet-link {
+    color: var(--brass-dark);
+    font-size: 10px;
+}
+
+.preparation-list {
+    margin-top: 18px;
+
+    border-top: 1px solid var(--line);
+}
+
+.preparation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    min-height: 78px;
+
+    border-bottom: 1px solid var(--line);
+}
+
+.preparation h3 {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.preparation p {
+    margin-top: 4px;
+
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.deadline {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.deadline strong {
+    color: var(--brass-dark);
+    font-family: "Instrument Serif", serif;
+    font-size: 24px;
+    font-weight: 400;
+}
+
+.deadline span {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    nav {
+        display: none;
+    }
+
+    .container {
+        width: 88vw;
+        padding-top: 48px;
+    }
+
+    .time-options {
+        flex-wrap: wrap;
+    }
+
+    .plan-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .plan-item.priority::before {
+        left: -10px;
+    }
+}

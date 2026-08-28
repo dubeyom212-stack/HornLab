@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Today — HornLab{% endblock %}
+
+{% block content %}
+
+<section class="today-header">
+    <div>
+        <p class="label">FRIDAY, AUGUST 28</p>
+        <h1>Your practice,<br><em>purposefully planned.</em></h1>
+        <p class="intro">
+            Tell HornLab how much time you have. We'll help you decide what deserves it.
+        </p>
+    </div>
+</section>
+
+
+<section class="time-section">
+
+    <div class="section-top">
+        <div>
+            <p class="label">TODAY</p>
+            <h2>How much time do you have?</h2>
+        </div>
+    </div>
+
+    <div class="time-options">
+        <button class="time-option" data-minutes="15">15 min</button>
+        <button class="time-option active" data-minutes="30">30 min</button>
+        <button class="time-option" data-minutes="45">45 min</button>
+        <button class="time-option" data-minutes="60">60+ min</button>
+    </div>
+
+</section>
+
+
+<section class="plan-section">
+
+    <div class="section-top">
+        <div>
+            <p class="label">RECOMMENDED</p>
+            <h2>Your practice plan</h2>
+        </div>
+
+        <span class="plan-duration" id="planDuration">30 min</span>
+    </div>
+
+
+    <div class="practice-plan" id="practicePlan">
+
+        <div class="plan-item">
+            <div class="plan-number">01</div>
+
+            <div class="plan-content">
+                <div class="plan-title-row">
+                    <h3>Warm-up</h3>
+                    <span>6 min</span>
+                </div>
+
+                <p>Long tones + lip slurs</p>
+                <small>Maintain tone and flexibility</small>
+            </div>
+        </div>
+
+
+        <div class="plan-item priority">
+            <div class="plan-number">02</div>
+
+            <div class="plan-content">
+                <div class="plan-title-row">
+                    <h3>Andalucía</h3>
+                    <span>14 min</span>
+                </div>
+
+                <p>Exposed entrances</p>
+                <small>Performance · September 9</small>
+            </div>
+
+            <div class="priority-mark">Priority</div>
+        </div>
+
+
+        <div class="plan-item">
+            <div class="plan-number">03</div>
+
+            <div class="plan-content">
+                <div class="plan-title-row">
+                    <h3>All-State Excerpt #3</h3>
+                    <span>10 min</span>
+                </div>
+
+                <p>Accuracy at tempo</p>
+                <small>Audition · September 18</small>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="plan-footer">
+        <p id="planExplanation">
+            This plan prioritizes upcoming deadlines and areas that need attention.
+        </p>
+
+        <a href="#" class="primary-button">
+            Start session
+        </a>
+    </div>
+
+</section>
+
+
+<section class="prepare-preview">
+
+    <div class="section-top">
+        <div>
+            <p class="label">UPCOMING</p>
+            <h2>What you're preparing for</h2>
+        </div>
+
+        <a href="#" class="quiet-link">View all</a>
+    </div>
+
+    <div class="preparation-list">
+
+        <div class="preparation">
+            <div>
+                <h3>Andalucía</h3>
+                <p>Performance</p>
+            </div>
+
+            <div class="deadline">
+                <strong>12</strong>
+                <span>days</span>
+            </div>
+        </div>
+
+
+        <div class="preparation">
+            <div>
+                <h3>All-State Audition</h3>
+                <p>Audition</p>
+            </div>
+
+            <div class="deadline">
+                <strong>21</strong>
+                <span>days</span>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+
+<script>
+
+    const timeOptions = document.querySelectorAll(".time-option");
+    const planDuration = document.getElementById("planDuration");
+    const practicePlan = document.getElementById("practicePlan");
+    const planExplanation = document.getElementById("planExplanation");
+
+    const plans = {
+
+        15: [
+            {
+                title: "Andalucía",
+                duration: "10 min",
+                focus: "Exposed entrances",
+                detail: "Performance · September 9",
+                priority: true
+            },
+            {
+                title: "Warm-up",
+                duration: "5 min",
+                focus: "Long tones + flexibility",
+                detail: "Prepare your sound"
+            }
+        ],
+
+        30: [
+            {
+                title: "Warm-up",
+                duration: "6 min",
+                focus: "Long tones + lip slurs",
+                detail: "Maintain tone and flexibility"
+            },
+            {
+                title: "Andalucía",
+                duration: "14 min",
+                focus: "Exposed entrances",
+                detail: "Performance · September 9",
+                priority: true
+            },
+            {
+                title: "All-State Excerpt #3",
+                duration: "10 min",
+                focus: "Accuracy at tempo",
+                detail: "Audition · September 18"
+            }
+        ],
+
+        45: [
+            {
+                title: "Warm-up",
+                duration: "8 min",
+                focus: "Long tones + lip slurs",
+                detail: "Build sound and flexibility"
+            },
+            {
+                title: "Andalucía",
+                duration: "20 min",
+                focus: "Exposed entrances + phrasing",
+                detail: "Performance · September 9",
+                priority: true
+            },
+            {
+                title: "All-State Excerpt #3",
+                duration: "17 min",
+                focus: "Accuracy at tempo",
+                detail: "Audition · September 18"
+            }
+        ],
+
+        60: [
+            {
+                title: "Warm-up",
+                duration: "10 min",
+                focus: "Long tones + flexibility",
+                detail: "Build a consistent sound"
+            },
+            {
+                title: "Andalucía",
+                duration: "25 min",
+                focus: "Entrances + exposed passages",
+                detail: "Performance · September 9",
+                priority: true
+            },
+            {
+                title: "All-State Excerpt #3",
+                duration: "15 min",
+                focus: "Accuracy + tempo",
+                detail: "Audition · September 18"
+            },
+            {
+                title: "Scales",
+                duration: "10 min",
+                focus: "Full-range flexibility",
+                detail: "Maintain fundamentals"
+            }
+        ]
+
+    };
+
+
+    function renderPlan(minutes) {
+
+        const plan = plans[minutes];
+
+        planDuration.textContent = minutes === 60 ? "60+ min" : `${minutes} min`;
+
+        practicePlan.innerHTML = "";
+
+        plan.forEach((item, index) => {
+
+            const number = String(index + 1).padStart(2, "0");
+
+            const planItem = document.createElement("div");
+
+            planItem.className = item.priority
+                ? "plan-item priority"
+                : "plan-item";
+
+            planItem.innerHTML = `
+                <div class="plan-number">${number}</div>
+
+                <div class="plan-content">
+
+                    <div class="plan-title-row">
+                        <h3>${item.title}</h3>
+                        <span>${item.duration}</span>
+                    </div>
+
+                    <p>${item.focus}</p>
+                    <small>${item.detail}</small>
+
+                </div>
+
+                ${item.priority
+                    ? '<div class="priority-mark">Priority</div>'
+                    : ''
+                }
+            `;
+
+            practicePlan.appendChild(planItem);
+
+        });
+
+        planExplanation.textContent =
+            "This plan prioritizes upcoming deadlines and areas that need attention.";
+    }
+
+
+    timeOptions.forEach(option => {
+
+        option.addEventListener("click", () => {
+
+            timeOptions.forEach(button => {
+                button.classList.remove("active");
+            });
+
+            option.classList.add("active");
+
+            const minutes = Number(option.dataset.minutes);
+
+            renderPlan(minutes);
+        });
+
+    });
+
+</script>
+
+{% endblock %}
