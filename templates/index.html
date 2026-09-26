@@ -4,319 +4,1967 @@
 
 {% block content %}
 
-<section class="today-header">
-    <div>
-        <p class="label">FRIDAY, AUGUST 28</p>
-        <h1>Your practice,<br><em>purposefully planned.</em></h1>
-        <p class="intro">
-            Tell HornLab how much time you have. We'll help you decide what deserves it.
+<div
+    id="hornlab-data"
+    data-profile-id="{{ profile.id }}"
+    data-profile-name="{{ profile.name }}"
+></div>
+
+
+<!-- ========================================
+     HERO
+======================================== -->
+
+<section class="home-hero">
+
+    <div class="hero-copy">
+
+        <div class="eyebrow">
+            {{ today }}
+        </div>
+
+        <h1>
+            Good to see you,<br>
+            <em>{{ profile.name }}.</em>
+        </h1>
+
+        <p class="hero-description">
+            Make the time you have count.
         </p>
+
     </div>
+
+    <div class="practice-builder">
+
+        <div class="builder-heading">
+
+            <div>
+                <span class="builder-label">
+                    BUILD A SESSION
+                </span>
+
+                <span class="builder-subtitle">
+                    How much time do you have?
+                </span>
+            </div>
+
+            <span class="builder-value" id="selectedTimeLabel">
+                30 min
+            </span>
+
+        </div>
+
+        <div class="time-options">
+
+            <button data-minutes="10">
+                10
+            </button>
+
+            <button data-minutes="15">
+                15
+            </button>
+
+            <button data-minutes="20">
+                20
+            </button>
+
+            <button data-minutes="30" class="selected">
+                30
+            </button>
+
+            <button data-minutes="45">
+                45
+            </button>
+
+            <button data-minutes="60">
+                60
+            </button>
+
+        </div>
+
+        <div class="builder-bottom">
+
+            <label class="mode-select">
+
+                <span>Approach</span>
+
+                <select id="planMode">
+
+                    <option value="balanced">
+                        Balanced
+                    </option>
+
+                    <option value="deadline">
+                        Deadlines first
+                    </option>
+
+                    <option value="weakest">
+                        Weakest areas first
+                    </option>
+
+                </select>
+
+            </label>
+
+            <button
+                id="buildPlan"
+                class="primary-button build-button"
+            >
+                <span>Build my session</span>
+
+                <svg
+                    viewBox="0 0 18 18"
+                    aria-hidden="true"
+                >
+                    <path
+                        d="M3 9h11M9.5 4.5 14 9l-4.5 4.5"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+
+            </button>
+
+        </div>
+
+    </div>
+
 </section>
 
 
-<section class="time-section">
+{% if not items %}
 
-    <div class="section-top">
-        <div>
-            <p class="label">TODAY</p>
-            <h2>How much time do you have?</h2>
-        </div>
+<!-- ========================================
+     EMPTY STATE
+======================================== -->
+
+<section class="empty-state premium-empty">
+
+    <div class="empty-icon">
+        <span></span>
     </div>
 
-    <div class="time-options">
-        <button class="time-option" data-minutes="15">15 min</button>
-        <button class="time-option active" data-minutes="30">30 min</button>
-        <button class="time-option" data-minutes="45">45 min</button>
-        <button class="time-option" data-minutes="60">60+ min</button>
+    <div>
+
+        <div class="eyebrow">
+            YOUR REPERTOIRE
+        </div>
+
+        <h2>
+            Start with what you're working on.
+        </h2>
+
+        <p>
+            Add pieces, auditions, assignments, or technical goals.
+            HornLab will use them to shape your practice sessions.
+        </p>
+
+        <button
+            id="openAddItem"
+            class="secondary-button"
+        >
+            Add your first item
+        </button>
+
     </div>
 
 </section>
 
+{% else %}
 
-<section class="plan-section">
 
-    <div class="section-top">
+<!-- ========================================
+     PLAN
+======================================== -->
+
+<section
+    id="planSection"
+    class="plan-section hidden"
+>
+
+    <div class="section-heading-row">
+
         <div>
-            <p class="label">RECOMMENDED</p>
-            <h2>Your practice plan</h2>
-        </div>
 
-        <span class="plan-duration" id="planDuration">30 min</span>
-    </div>
-
-
-    <div class="practice-plan" id="practicePlan">
-
-        <div class="plan-item">
-            <div class="plan-number">01</div>
-
-            <div class="plan-content">
-                <div class="plan-title-row">
-                    <h3>Warm-up</h3>
-                    <span>6 min</span>
-                </div>
-
-                <p>Long tones + lip slurs</p>
-                <small>Maintain tone and flexibility</small>
-            </div>
-        </div>
-
-
-        <div class="plan-item priority">
-            <div class="plan-number">02</div>
-
-            <div class="plan-content">
-                <div class="plan-title-row">
-                    <h3>Andalucía</h3>
-                    <span>14 min</span>
-                </div>
-
-                <p>Exposed entrances</p>
-                <small>Performance · September 9</small>
+            <div
+                id="planEyebrow"
+                class="eyebrow"
+            >
+                YOUR 30 MINUTES
             </div>
 
-            <div class="priority-mark">Priority</div>
+            <h2>
+                Your session.
+            </h2>
+
         </div>
 
-
-        <div class="plan-item">
-            <div class="plan-number">03</div>
-
-            <div class="plan-content">
-                <div class="plan-title-row">
-                    <h3>All-State Excerpt #3</h3>
-                    <span>10 min</span>
-                </div>
-
-                <p>Accuracy at tempo</p>
-                <small>Audition · September 18</small>
-            </div>
-        </div>
+        <button
+            id="rebuildPlan"
+            class="text-button"
+        >
+            Rebuild
+        </button>
 
     </div>
 
+    <div
+        id="planList"
+        class="plan-list"
+    ></div>
 
     <div class="plan-footer">
-        <p id="planExplanation">
-            This plan prioritizes upcoming deadlines and areas that need attention.
+
+        <div class="plan-footer-note">
+            <span class="status-dot"></span>
+            Built from your current priorities
+        </div>
+
+        <button
+            id="startSession"
+            class="primary-button plan-start-button"
+        >
+            Start practice
+            <svg
+                viewBox="0 0 18 18"
+                aria-hidden="true"
+            >
+                <path
+                    d="m6 3 6 6-6 6"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+            </svg>
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================
+     REPERTOIRE
+======================================== -->
+
+<section
+    id="library"
+    class="dashboard-section"
+>
+
+    <div class="section-heading-row">
+
+        <div>
+
+            <div class="eyebrow">
+                REPERTOIRE
+            </div>
+
+            <h2>
+                What you're working on.
+            </h2>
+
+        </div>
+
+        <button
+            id="openAddItem"
+            class="secondary-button"
+        >
+            <span>+</span>
+            Add item
+        </button>
+
+    </div>
+
+    <div class="library-list">
+
+        {% for item in items %}
+
+        <article
+            class="library-item"
+            data-item-id="{{ item.id }}"
+        >
+
+            <div class="library-index">
+                {{ "%02d"|format(loop.index) }}
+            </div>
+
+            <div class="library-main">
+
+                <div class="library-title-row">
+
+                    <h3>
+                        {{ item.title }}
+                    </h3>
+
+                    {% if item.priority == "high" %}
+                    <span class="priority-tag">
+                        Priority
+                    </span>
+                    {% endif %}
+
+                </div>
+
+                <div class="library-meta">
+
+                    <span>
+                        {{ item.category|replace("-", " ")|title }}
+                    </span>
+
+                    {% if item.deadline %}
+                    <span>
+                        Due {{ item.deadline }}
+                    </span>
+                    {% endif %}
+
+                    {% if item.last_practiced %}
+                    <span>
+                        Last practiced {{ item.last_practiced }}
+                    </span>
+                    {% else %}
+                    <span>
+                        Not practiced yet
+                    </span>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            <div class="library-side">
+
+                <span
+                    class="confidence-tag {{ item.confidence }}"
+                >
+                    {% if item.confidence == "needs-work" %}
+                        Needs work
+                    {% elif item.confidence == "developing" %}
+                        Developing
+                    {% else %}
+                        Solid
+                    {% endif %}
+                </span>
+
+                <button
+                    class="delete-item"
+                    data-id="{{ item.id }}"
+                    title="Remove item"
+                    aria-label="Remove {{ item.title }}"
+                >
+                    <svg
+                        viewBox="0 0 20 20"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M5 5l10 10M15 5 5 15"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.4"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                </button>
+
+            </div>
+
+        </article>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+
+<!-- ========================================
+     PROGRESS
+======================================== -->
+
+<section
+    id="stats"
+    class="dashboard-section progress-section"
+>
+
+    <div class="section-heading-row">
+
+        <div>
+
+            <div class="eyebrow">
+                PROGRESS
+            </div>
+
+            <h2>
+                Practice, over time.
+            </h2>
+
+        </div>
+
+    </div>
+
+    <div class="stats-grid">
+
+        <div class="stat-card stat-card-primary">
+
+            <span class="stat-label">
+                Total practice
+            </span>
+
+            <div class="stat-number-row">
+                <strong id="totalMinutes">—</strong>
+                <span>min</span>
+            </div>
+
+            <span class="stat-detail">
+                Since you started
+            </span>
+
+        </div>
+
+        <div class="stat-card">
+
+            <span class="stat-label">
+                Sessions
+            </span>
+
+            <div class="stat-number-row">
+                <strong id="sessionCount">—</strong>
+            </div>
+
+            <span class="stat-detail">
+                Completed
+            </span>
+
+        </div>
+
+        <div class="stat-card">
+
+            <span class="stat-label">
+                Recent practice
+            </span>
+
+            <div class="stat-number-row">
+                <strong id="recentMinutes">—</strong>
+                <span>min</span>
+            </div>
+
+            <span class="stat-detail">
+                Last 7 sessions
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+
+<!-- ========================================
+     ADD ITEM MODAL
+======================================== -->
+
+<div
+    id="addItemModal"
+    class="modal hidden"
+>
+
+    <div class="modal-backdrop"></div>
+
+    <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="addItemHeading"
+    >
+
+        <button
+            id="closeAddItem"
+            class="modal-close"
+            aria-label="Close"
+        >
+            ×
+        </button>
+
+        <div class="modal-eyebrow">
+            REPERTOIRE
+        </div>
+
+        <h2 id="addItemHeading">
+            Add something to work on.
+        </h2>
+
+        <p class="modal-description">
+            Keep it simple. You can refine it later.
         </p>
 
-        <a href="#" class="primary-button">
-            Start session
-        </a>
+        <form id="addItemForm">
+
+            <label>
+                <span>Name</span>
+
+                <input
+                    type="text"
+                    id="itemTitle"
+                    placeholder="e.g. Mahler 5"
+                    autocomplete="off"
+                    required
+                >
+            </label>
+
+            <div class="form-grid">
+
+                <label>
+                    <span>Type</span>
+
+                    <select id="itemCategory">
+
+                        <option value="repertoire">
+                            Repertoire
+                        </option>
+
+                        <option value="audition">
+                            Audition
+                        </option>
+
+                        <option value="performance">
+                            Performance
+                        </option>
+
+                        <option value="assignment">
+                            Assignment
+                        </option>
+
+                        <option value="technique">
+                            Technique
+                        </option>
+
+                        <option value="other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </label>
+
+                <label>
+                    <span>Deadline</span>
+
+                    <input
+                        type="date"
+                        id="itemDeadline"
+                    >
+                </label>
+
+            </div>
+
+            <div class="form-grid">
+
+                <label>
+                    <span>Priority</span>
+
+                    <select id="itemPriority">
+
+                        <option value="high">
+                            High
+                        </option>
+
+                        <option
+                            value="medium"
+                            selected
+                        >
+                            Medium
+                        </option>
+
+                        <option value="low">
+                            Low
+                        </option>
+
+                    </select>
+
+                </label>
+
+                <label>
+                    <span>Current confidence</span>
+
+                    <select id="itemConfidence">
+
+                        <option value="needs-work">
+                            Needs work
+                        </option>
+
+                        <option
+                            value="developing"
+                            selected
+                        >
+                            Developing
+                        </option>
+
+                        <option value="solid">
+                            Solid
+                        </option>
+
+                    </select>
+
+                </label>
+
+            </div>
+
+            <button
+                type="submit"
+                class="primary-button modal-submit"
+            >
+                Add to repertoire
+            </button>
+
+        </form>
+
     </div>
 
-</section>
+</div>
 
 
-<section class="prepare-preview">
+<!-- ========================================
+     PRACTICE SESSION
+======================================== -->
 
-    <div class="section-top">
-        <div>
-            <p class="label">UPCOMING</p>
-            <h2>What you're preparing for</h2>
+<div
+    id="sessionOverlay"
+    class="session-overlay hidden"
+>
+
+    <div class="session-shell">
+
+        <div class="session-top">
+
+            <div class="session-brand">
+                HORN<span>//</span>LAB
+            </div>
+
+            <div class="session-progress-wrap">
+
+                <span
+                    id="sessionProgress"
+                    class="session-progress"
+                >
+                    1 of 1
+                </span>
+
+                <div class="session-progress-bar">
+                    <div
+                        id="sessionProgressFill"
+                        class="session-progress-fill"
+                    ></div>
+                </div>
+
+            </div>
+
+            <button
+                id="closeSession"
+                class="session-close"
+                aria-label="Leave session"
+            >
+                ×
+            </button>
+
         </div>
 
-        <a href="#" class="quiet-link">View all</a>
+        <div class="session-content">
+
+            <div
+                id="sessionType"
+                class="session-eyebrow"
+            >
+                WARM UP
+            </div>
+
+            <div
+                id="sessionTitle"
+                class="session-title"
+            >
+                Warm up
+            </div>
+
+            <div
+                id="sessionFocus"
+                class="session-focus"
+            >
+                Get the horn going
+            </div>
+
+            <p
+                id="sessionInstruction"
+                class="session-instruction"
+            >
+                A few long tones and some flexibility.
+                Get comfortable and move on.
+            </p>
+
+            <div class="session-timer-wrap">
+
+                <div
+                    id="sessionTimer"
+                    class="session-timer"
+                >
+                    00:00
+                </div>
+
+                <span class="timer-caption">
+                    elapsed
+                </span>
+
+            </div>
+
+            <div class="session-success">
+
+                <span>
+                    DONE WHEN
+                </span>
+
+                <strong id="sessionSuccess">
+                    Feels ready
+                </strong>
+
+            </div>
+
+        </div>
+
+        <div class="session-controls">
+
+            <button
+                id="pauseSession"
+                class="session-secondary-button"
+            >
+                Pause
+            </button>
+
+            <button
+                id="completeStep"
+                class="session-primary-button"
+            >
+                Done
+                <svg
+                    viewBox="0 0 18 18"
+                    aria-hidden="true"
+                >
+                    <path
+                        d="m5 9 2.7 2.7L13.5 6"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            </button>
+
+        </div>
+
     </div>
 
-    <div class="preparation-list">
-
-        <div class="preparation">
-            <div>
-                <h3>Andalucía</h3>
-                <p>Performance</p>
-            </div>
-
-            <div class="deadline">
-                <strong>12</strong>
-                <span>days</span>
-            </div>
-        </div>
-
-
-        <div class="preparation">
-            <div>
-                <h3>All-State Audition</h3>
-                <p>Audition</p>
-            </div>
-
-            <div class="deadline">
-                <strong>21</strong>
-                <span>days</span>
-            </div>
-        </div>
-
-    </div>
-
-</section>
+</div>
 
 
 <script>
 
-    const timeOptions = document.querySelectorAll(".time-option");
-    const planDuration = document.getElementById("planDuration");
-    const practicePlan = document.getElementById("practicePlan");
-    const planExplanation = document.getElementById("planExplanation");
+const dataElement =
+    document.getElementById("hornlab-data");
 
-    const plans = {
-
-        15: [
-            {
-                title: "Andalucía",
-                duration: "10 min",
-                focus: "Exposed entrances",
-                detail: "Performance · September 9",
-                priority: true
-            },
-            {
-                title: "Warm-up",
-                duration: "5 min",
-                focus: "Long tones + flexibility",
-                detail: "Prepare your sound"
-            }
-        ],
-
-        30: [
-            {
-                title: "Warm-up",
-                duration: "6 min",
-                focus: "Long tones + lip slurs",
-                detail: "Maintain tone and flexibility"
-            },
-            {
-                title: "Andalucía",
-                duration: "14 min",
-                focus: "Exposed entrances",
-                detail: "Performance · September 9",
-                priority: true
-            },
-            {
-                title: "All-State Excerpt #3",
-                duration: "10 min",
-                focus: "Accuracy at tempo",
-                detail: "Audition · September 18"
-            }
-        ],
-
-        45: [
-            {
-                title: "Warm-up",
-                duration: "8 min",
-                focus: "Long tones + lip slurs",
-                detail: "Build sound and flexibility"
-            },
-            {
-                title: "Andalucía",
-                duration: "20 min",
-                focus: "Exposed entrances + phrasing",
-                detail: "Performance · September 9",
-                priority: true
-            },
-            {
-                title: "All-State Excerpt #3",
-                duration: "17 min",
-                focus: "Accuracy at tempo",
-                detail: "Audition · September 18"
-            }
-        ],
-
-        60: [
-            {
-                title: "Warm-up",
-                duration: "10 min",
-                focus: "Long tones + flexibility",
-                detail: "Build a consistent sound"
-            },
-            {
-                title: "Andalucía",
-                duration: "25 min",
-                focus: "Entrances + exposed passages",
-                detail: "Performance · September 9",
-                priority: true
-            },
-            {
-                title: "All-State Excerpt #3",
-                duration: "15 min",
-                focus: "Accuracy + tempo",
-                detail: "Audition · September 18"
-            },
-            {
-                title: "Scales",
-                duration: "10 min",
-                focus: "Full-range flexibility",
-                detail: "Maintain fundamentals"
-            }
-        ]
-
-    };
+const profileId =
+    Number(dataElement.dataset.profileId);
 
 
-    function renderPlan(minutes) {
+let selectedMinutes = 30;
+let currentPlan = [];
+let currentPlanIndex = 0;
 
-        const plan = plans[minutes];
+let sessionSeconds = 0;
+let sessionInterval = null;
+let sessionRunning = false;
+let sessionStartedAt = null;
 
-        planDuration.textContent = minutes === 60 ? "60+ min" : `${minutes} min`;
 
-        practicePlan.innerHTML = "";
+/* ========================================
+   TIME SELECTION
+======================================== */
 
-        plan.forEach((item, index) => {
+const timeButtons =
+    document.querySelectorAll(".time-options button");
 
-            const number = String(index + 1).padStart(2, "0");
+const selectedTimeLabel =
+    document.getElementById("selectedTimeLabel");
 
-            const planItem = document.createElement("div");
+timeButtons.forEach(function (button) {
 
-            planItem.className = item.priority
-                ? "plan-item priority"
-                : "plan-item";
+    button.addEventListener("click", function () {
 
-            planItem.innerHTML = `
-                <div class="plan-number">${number}</div>
+        timeButtons.forEach(function (item) {
+            item.classList.remove("selected");
+        });
 
-                <div class="plan-content">
+        button.classList.add("selected");
 
-                    <div class="plan-title-row">
-                        <h3>${item.title}</h3>
-                        <span>${item.duration}</span>
+        selectedMinutes =
+            Number(button.dataset.minutes);
+
+        if (selectedTimeLabel) {
+            selectedTimeLabel.textContent =
+                selectedMinutes + " min";
+        }
+
+        const eyebrow =
+            document.getElementById("planEyebrow");
+
+        if (eyebrow) {
+            eyebrow.textContent =
+                "YOUR " + selectedMinutes + " MINUTES";
+        }
+
+    });
+
+});
+
+
+/* ========================================
+   BUILD PLAN
+======================================== */
+
+const buildPlanButton =
+    document.getElementById("buildPlan");
+
+async function buildPracticePlan() {
+
+    if (!buildPlanButton) {
+        return;
+    }
+
+    buildPlanButton.disabled = true;
+
+    buildPlanButton.innerHTML = `
+        <span>Building your session...</span>
+    `;
+
+    const mode =
+        document.getElementById("planMode").value;
+
+    try {
+
+        const response =
+            await fetch("/api/plan", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    profile_id: profileId,
+                    minutes: selectedMinutes,
+                    mode: mode
+                })
+
+            });
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.error ||
+                "Couldn't build the session."
+            );
+        }
+
+        currentPlan =
+            data.plan || [];
+
+        renderPlan(currentPlan);
+
+    } catch (error) {
+
+        showToast(error.message);
+
+    } finally {
+
+        buildPlanButton.disabled = false;
+
+        buildPlanButton.innerHTML = `
+            <span>Build my session</span>
+
+            <svg
+                viewBox="0 0 18 18"
+                aria-hidden="true"
+            >
+                <path
+                    d="M3 9h11M9.5 4.5 14 9l-4.5 4.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+            </svg>
+        `;
+
+    }
+
+}
+
+if (buildPlanButton) {
+    buildPlanButton.addEventListener(
+        "click",
+        buildPracticePlan
+    );
+}
+
+const rebuildPlanButton =
+    document.getElementById("rebuildPlan");
+
+if (rebuildPlanButton) {
+    rebuildPlanButton.addEventListener(
+        "click",
+        buildPracticePlan
+    );
+}
+
+
+/* ========================================
+   RENDER PLAN
+======================================== */
+
+function renderPlan(plan) {
+
+    const section =
+        document.getElementById("planSection");
+
+    const list =
+        document.getElementById("planList");
+
+    if (!section || !list) {
+        return;
+    }
+
+    list.innerHTML = "";
+
+    if (!plan.length) {
+
+        list.innerHTML = `
+            <div class="plan-empty">
+                <strong>Nothing to plan yet.</strong>
+                <span>
+                    Add something to your repertoire first.
+                </span>
+            </div>
+        `;
+
+        section.classList.remove("hidden");
+
+        return;
+    }
+
+    plan.forEach(function (block, index) {
+
+        const article =
+            document.createElement("article");
+
+        article.className = "plan-block";
+
+        if (block.priority) {
+            article.classList.add("high-priority");
+        }
+
+        article.innerHTML = `
+
+            <div class="plan-number">
+                ${String(index + 1).padStart(2, "0")}
+            </div>
+
+            <div class="plan-block-main">
+
+                <div class="plan-block-top">
+
+                    <div>
+
+                        <div class="plan-block-type">
+                            ${escapeHtml(
+                                formatCategory(block.type)
+                            )}
+                        </div>
+
+                        <h3>
+                            ${escapeHtml(block.title)}
+                        </h3>
+
                     </div>
 
-                    <p>${item.focus}</p>
-                    <small>${item.detail}</small>
+                    <div class="plan-duration">
+                        ${block.duration} min
+                    </div>
 
                 </div>
 
-                ${item.priority
-                    ? '<div class="priority-mark">Priority</div>'
-                    : ''
-                }
-            `;
+                <div class="plan-focus">
+                    ${escapeHtml(block.focus)}
+                </div>
 
-            practicePlan.appendChild(planItem);
+                <p class="plan-instruction">
+                    ${escapeHtml(block.instruction)}
+                </p>
 
-        });
+                <div class="success-line">
 
-        planExplanation.textContent =
-            "This plan prioritizes upcoming deadlines and areas that need attention.";
-    }
+                    <span>Done when</span>
 
+                    <strong>
+                        ${escapeHtml(block.success)}
+                    </strong>
 
-    timeOptions.forEach(option => {
+                </div>
 
-        option.addEventListener("click", () => {
+            </div>
 
-            timeOptions.forEach(button => {
-                button.classList.remove("active");
-            });
+        `;
 
-            option.classList.add("active");
-
-            const minutes = Number(option.dataset.minutes);
-
-            renderPlan(minutes);
-        });
+        list.appendChild(article);
 
     });
+
+    section.classList.remove("hidden");
+
+    section.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+}
+
+
+/* ========================================
+   ADD ITEM MODAL
+======================================== */
+
+const addModal =
+    document.getElementById("addItemModal");
+
+const closeAddButton =
+    document.getElementById("closeAddItem");
+
+document.querySelectorAll("#openAddItem")
+    .forEach(function (button) {
+
+        button.addEventListener(
+            "click",
+            openAddModal
+        );
+
+    });
+
+if (closeAddButton) {
+    closeAddButton.addEventListener(
+        "click",
+        closeAddModal
+    );
+}
+
+if (addModal) {
+
+    const backdrop =
+        addModal.querySelector(".modal-backdrop");
+
+    if (backdrop) {
+        backdrop.addEventListener(
+            "click",
+            closeAddModal
+        );
+    }
+
+}
+
+function openAddModal() {
+
+    if (!addModal) {
+        return;
+    }
+
+    addModal.classList.remove("hidden");
+
+    document.body.classList.add("modal-open");
+
+    setTimeout(function () {
+
+        const title =
+            document.getElementById("itemTitle");
+
+        if (title) {
+            title.focus();
+        }
+
+    }, 120);
+
+}
+
+function closeAddModal() {
+
+    if (!addModal) {
+        return;
+    }
+
+    addModal.classList.add("hidden");
+
+    document.body.classList.remove("modal-open");
+
+}
+
+
+/* ========================================
+   ADD ITEM
+======================================== */
+
+const addItemForm =
+    document.getElementById("addItemForm");
+
+if (addItemForm) {
+
+    addItemForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+            const button =
+                addItemForm.querySelector(
+                    "button[type='submit']"
+                );
+
+            button.disabled = true;
+            button.textContent = "Adding...";
+
+            const payload = {
+
+                profile_id: profileId,
+
+                title:
+                    document
+                        .getElementById("itemTitle")
+                        .value
+                        .trim(),
+
+                category:
+                    document
+                        .getElementById("itemCategory")
+                        .value,
+
+                deadline:
+                    document
+                        .getElementById("itemDeadline")
+                        .value ||
+                    null,
+
+                priority:
+                    document
+                        .getElementById("itemPriority")
+                        .value,
+
+                confidence:
+                    document
+                        .getElementById("itemConfidence")
+                        .value
+
+            };
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/items",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify(payload)
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error ||
+                        "Couldn't add that."
+                    );
+
+                }
+
+                window.location.reload();
+
+            } catch (error) {
+
+                showToast(error.message);
+
+                button.disabled = false;
+                button.textContent =
+                    "Add to repertoire";
+
+            }
+
+        }
+    );
+
+}
+
+
+/* ========================================
+   DELETE ITEMS
+======================================== */
+
+document.querySelectorAll(".delete-item")
+    .forEach(function (button) {
+
+        button.addEventListener(
+            "click",
+            async function () {
+
+                const itemId =
+                    button.dataset.id;
+
+                if (
+                    !confirm(
+                        "Remove this from your repertoire?"
+                    )
+                ) {
+                    return;
+                }
+
+                button.disabled = true;
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/api/items/" +
+                            itemId,
+                            {
+                                method: "DELETE"
+                            }
+                        );
+
+                    const data =
+                        await response.json();
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            data.error ||
+                            "Couldn't remove that."
+                        );
+
+                    }
+
+                    const item =
+                        document.querySelector(
+                            '.library-item[data-item-id="' +
+                            itemId +
+                            '"]'
+                        );
+
+                    if (item) {
+
+                        item.style.opacity = "0";
+
+                        item.style.transform =
+                            "translateX(10px)";
+
+                        setTimeout(
+                            function () {
+                                item.remove();
+                            },
+                            180
+                        );
+
+                    }
+
+                } catch (error) {
+
+                    button.disabled = false;
+
+                    showToast(
+                        error.message
+                    );
+
+                }
+
+            }
+        );
+
+    });
+
+
+/* ========================================
+   STATS
+======================================== */
+
+async function loadStats() {
+
+    const total =
+        document.getElementById(
+            "totalMinutes"
+        );
+
+    const sessions =
+        document.getElementById(
+            "sessionCount"
+        );
+
+    const recent =
+        document.getElementById(
+            "recentMinutes"
+        );
+
+    if (!total || !sessions || !recent) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/insights?profile=" +
+                profileId
+            );
+
+        const data =
+            await response.json();
+
+        total.textContent =
+            data.total_minutes || 0;
+
+        sessions.textContent =
+            data.session_count || 0;
+
+        recent.textContent =
+            data.recent_minutes || 0;
+
+    } catch (error) {
+
+        total.textContent = "0";
+        sessions.textContent = "0";
+        recent.textContent = "0";
+
+    }
+
+}
+
+loadStats();
+
+
+/* ========================================
+   START SESSION
+======================================== */
+
+const startSessionButton =
+    document.getElementById(
+        "startSession"
+    );
+
+if (startSessionButton) {
+
+    startSessionButton.addEventListener(
+        "click",
+        function () {
+
+            if (!currentPlan.length) {
+                return;
+            }
+
+            currentPlanIndex = 0;
+            sessionSeconds = 0;
+            sessionStartedAt = Date.now();
+
+            openSession();
+
+        }
+    );
+
+}
+
+
+/* ========================================
+   SESSION
+======================================== */
+
+function openSession() {
+
+    const overlay =
+        document.getElementById(
+            "sessionOverlay"
+        );
+
+    if (!overlay) {
+        return;
+    }
+
+    overlay.classList.remove("hidden");
+
+    document.body.classList.add(
+        "session-open"
+    );
+
+    showCurrentBlock();
+
+}
+
+function showCurrentBlock() {
+
+    const block =
+        currentPlan[currentPlanIndex];
+
+    if (!block) {
+
+        finishSession();
+
+        return;
+    }
+
+    const progress =
+        document.getElementById(
+            "sessionProgress"
+        );
+
+    const fill =
+        document.getElementById(
+            "sessionProgressFill"
+        );
+
+    const type =
+        document.getElementById(
+            "sessionType"
+        );
+
+    const title =
+        document.getElementById(
+            "sessionTitle"
+        );
+
+    const focus =
+        document.getElementById(
+            "sessionFocus"
+        );
+
+    const instruction =
+        document.getElementById(
+            "sessionInstruction"
+        );
+
+    const success =
+        document.getElementById(
+            "sessionSuccess"
+        );
+
+    progress.textContent =
+        (currentPlanIndex + 1) +
+        " of " +
+        currentPlan.length;
+
+    const percentage =
+        ((currentPlanIndex + 1) /
+        currentPlan.length) * 100;
+
+    fill.style.width =
+        percentage + "%";
+
+    type.textContent =
+        formatCategory(block.type)
+            .toUpperCase();
+
+    title.textContent =
+        block.title;
+
+    focus.textContent =
+        block.focus;
+
+    instruction.textContent =
+        block.instruction;
+
+    success.textContent =
+        block.success;
+
+    sessionSeconds = 0;
+
+    updateTimer();
+
+    startTimer();
+
+}
+
+
+function startTimer() {
+
+    clearInterval(
+        sessionInterval
+    );
+
+    sessionRunning = true;
+
+    const pauseButton =
+        document.getElementById(
+            "pauseSession"
+        );
+
+    pauseButton.textContent =
+        "Pause";
+
+    sessionInterval =
+        setInterval(
+            function () {
+
+                if (!sessionRunning) {
+                    return;
+                }
+
+                sessionSeconds++;
+
+                updateTimer();
+
+            },
+            1000
+        );
+
+}
+
+
+function updateTimer() {
+
+    const minutes =
+        Math.floor(
+            sessionSeconds / 60
+        );
+
+    const seconds =
+        sessionSeconds % 60;
+
+    const timer =
+        document.getElementById(
+            "sessionTimer"
+        );
+
+    if (timer) {
+
+        timer.textContent =
+            String(minutes).padStart(
+                2,
+                "0"
+            ) +
+            ":" +
+            String(seconds).padStart(
+                2,
+                "0"
+            );
+
+    }
+
+}
+
+
+/* ========================================
+   PAUSE
+======================================== */
+
+const pauseButton =
+    document.getElementById(
+        "pauseSession"
+    );
+
+if (pauseButton) {
+
+    pauseButton.addEventListener(
+        "click",
+        function () {
+
+            sessionRunning =
+                !sessionRunning;
+
+            pauseButton.textContent =
+                sessionRunning
+                    ? "Pause"
+                    : "Resume";
+
+        }
+    );
+
+}
+
+
+/* ========================================
+   COMPLETE STEP
+======================================== */
+
+const completeStepButton =
+    document.getElementById(
+        "completeStep"
+    );
+
+if (completeStepButton) {
+
+    completeStepButton.addEventListener(
+        "click",
+        function () {
+
+            currentPlanIndex++;
+
+            if (
+                currentPlanIndex >=
+                currentPlan.length
+            ) {
+
+                finishSession();
+
+                return;
+
+            }
+
+            showCurrentBlock();
+
+        }
+    );
+
+}
+
+
+/* ========================================
+   CLOSE SESSION
+======================================== */
+
+const closeSessionButton =
+    document.getElementById(
+        "closeSession"
+    );
+
+if (closeSessionButton) {
+
+    closeSessionButton.addEventListener(
+        "click",
+        function () {
+
+            if (
+                confirm(
+                    "Leave this session? Your progress won't be saved."
+                )
+            ) {
+
+                closeSession();
+
+            }
+
+        }
+    );
+
+}
+
+
+function closeSession() {
+
+    clearInterval(
+        sessionInterval
+    );
+
+    sessionRunning = false;
+
+    const overlay =
+        document.getElementById(
+            "sessionOverlay"
+        );
+
+    overlay.classList.add("hidden");
+
+    document.body.classList.remove(
+        "session-open"
+    );
+
+}
+
+
+/* ========================================
+   FINISH SESSION
+======================================== */
+
+async function finishSession() {
+
+    clearInterval(
+        sessionInterval
+    );
+
+    sessionRunning = false;
+
+    const duration =
+        Math.max(
+            1,
+            Math.round(
+                (
+                    Date.now() -
+                    sessionStartedAt
+                ) / 60000
+            )
+        );
+
+    const completedItemIds =
+        currentPlan
+            .filter(function (block) {
+                return block.item_id;
+            })
+            .map(function (block) {
+                return block.item_id;
+            });
+
+    const focus =
+        currentPlan
+            .filter(function (block) {
+                return block.type !== "warmup";
+            })
+            .map(function (block) {
+                return block.title;
+            })
+            .join(", ") ||
+        "Practice";
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/session",
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            profile_id:
+                                profileId,
+
+                            duration:
+                                duration,
+
+                            focus:
+                                focus,
+
+                            notes:
+                                "",
+
+                            completed_item_ids:
+                                completedItemIds
+
+                        })
+
+                }
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                "Session could not be saved."
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Could not save session:",
+            error
+        );
+
+    }
+
+    document.getElementById(
+        "sessionType"
+    ).textContent =
+        "SESSION COMPLETE";
+
+    document.getElementById(
+        "sessionTitle"
+    ).textContent =
+        "Nice work.";
+
+    document.getElementById(
+        "sessionFocus"
+    ).textContent =
+        duration +
+        " minutes practiced.";
+
+    document.getElementById(
+        "sessionInstruction"
+    ).textContent =
+        "The work you just did has been added to your practice history.";
+
+    document.getElementById(
+        "sessionSuccess"
+    ).textContent =
+        "Session saved";
+
+    document.getElementById(
+        "sessionProgress"
+    ).textContent =
+        "Complete";
+
+    document.getElementById(
+        "sessionProgressFill"
+    ).style.width =
+        "100%";
+
+    const completeButton =
+        document.getElementById(
+            "completeStep"
+        );
+
+    completeButton.innerHTML = `
+        Done
+        <svg
+            viewBox="0 0 18 18"
+            aria-hidden="true"
+        >
+            <path
+                d="m5 9 2.7 2.7L13.5 6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+        </svg>
+    `;
+
+    completeButton.onclick =
+        function () {
+
+            closeSession();
+
+            window.location.reload();
+
+        };
+
+}
+
+
+/* ========================================
+   HELPERS
+======================================== */
+
+function formatCategory(category) {
+
+    if (!category) {
+        return "Practice";
+    }
+
+    return category
+        .replaceAll("-", " ")
+        .replace(
+            /\b\w/g,
+            function (letter) {
+                return letter.toUpperCase();
+            }
+        );
+
+}
+
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+
+function showToast(message) {
+
+    const existing =
+        document.querySelector(
+            ".toast"
+        );
+
+    if (existing) {
+        existing.remove();
+    }
+
+    const toast =
+        document.createElement("div");
+
+    toast.className = "toast";
+
+    toast.textContent =
+        message;
+
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(
+        function () {
+            toast.classList.add("visible");
+        }
+    );
+
+    setTimeout(
+        function () {
+
+            toast.classList.remove(
+                "visible"
+            );
+
+            setTimeout(
+                function () {
+                    toast.remove();
+                },
+                220
+            );
+
+        },
+        3000
+    );
+
+}
+
+
+/* ========================================
+   KEYBOARD
+======================================== */
+
+document.addEventListener(
+    "keydown",
+    function (event) {
+
+        if (
+            event.key === "Escape" &&
+            addModal &&
+            !addModal.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            closeAddModal();
+
+        }
+
+    }
+);
 
 </script>
 

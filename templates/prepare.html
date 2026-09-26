@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Prepare — HornLab{% endblock %}
+
+
+{% block content %}
+
+<section class="page-hero">
+
+    <p class="label">PREPARATION</p>
+
+    <h1>
+        Know what<br>
+        <em>comes next.</em>
+    </h1>
+
+    <p>
+        Keep performances, auditions, and other deadlines
+        in one place so HornLab can prioritize your practice.
+    </p>
+
+</section>
+
+
+
+<section class="section-block">
+
+    <div class="section-heading">
+
+        <div>
+            <p class="label">YOUR CALENDAR</p>
+            <h2>What you're preparing for</h2>
+        </div>
+
+        <span class="count-label">
+            {{ preparations|length }}
+            {% if preparations|length == 1 %}
+                item
+            {% else %}
+                items
+            {% endif %}
+        </span>
+
+    </div>
+
+
+    <div class="preparation-list large">
+
+        {% for preparation in preparations %}
+
+        <div class="preparation-row">
+
+            <div class="prep-left">
+
+                <div class="prep-icon large">
+                    {{ preparation.name[0] }}
+                </div>
+
+                <div>
+
+                    <h3>
+                        {{ preparation.name }}
+                    </h3>
+
+                    <p>
+                        {{ preparation.kind }}
+                        ·
+                        {{ preparation.priority }} priority
+                    </p>
+
+                    {% if preparation.notes %}
+                    <small>
+                        {{ preparation.notes }}
+                    </small>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <div class="prep-deadline">
+
+                <span>
+                    {{ preparation.deadline.strftime("%b %d") }}
+                </span>
+
+                <strong>
+
+                    {% set days = days_until(preparation.deadline) %}
+
+                    {% if days < 0 %}
+                        Overdue
+                    {% elif days == 0 %}
+                        Today
+                    {% elif days == 1 %}
+                        Tomorrow
+                    {% else %}
+                        {{ days }} days
+                    {% endif %}
+
+                </strong>
+
+            </div>
+
+
+            <form
+                action="{{ url_for('delete_preparation', preparation_id=preparation.id) }}"
+                method="POST"
+            >
+
+                <button
+                    class="delete-button"
+                    type="submit"
+                    title="Delete"
+                >
+                    ×
+                </button>
+
+            </form>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state">
+            Add your first performance or audition below.
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+
+
+<section class="section-block form-section">
+
+    <div class="section-heading">
+
+        <div>
+            <p class="label">NEW</p>
+            <h2>Add a preparation</h2>
+        </div>
+
+    </div>
+
+
+    <form
+        class="product-form"
+        action="{{ url_for('add_preparation') }}"
+        method="POST"
+    >
+
+        <div class="form-grid">
+
+            <label>
+
+                <span>Name</span>
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="e.g. State Solo & Ensemble"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+
+                <span>Type</span>
+
+                <select name="kind">
+
+                    <option>Performance</option>
+                    <option>Audition</option>
+                    <option>Competition</option>
+                    <option>Lesson</option>
+                    <option>Other</option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+
+                <span>Deadline</span>
+
+                <input
+                    type="date"
+                    name="deadline"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+
+                <span>Priority</span>
+
+                <select name="priority">
+
+                    <option>High</option>
+                    <option selected>Medium</option>
+                    <option>Low</option>
+
+                </select>
+
+            </label>
+
+        </div>
+
+
+        <label>
+
+            <span>Notes</span>
+
+            <textarea
+                name="notes"
+                placeholder="What needs attention?"
+                rows="3"
+            ></textarea>
+
+        </label>
+
+
+        <button
+            class="primary-button form-button"
+            type="submit"
+        >
+            Add preparation
+            <span>→</span>
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

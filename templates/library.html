@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Library — HornLab{% endblock %}
+
+
+{% block content %}
+
+<section class="page-hero">
+
+    <p class="label">LIBRARY</p>
+
+    <h1>
+        Everything<br>
+        <em>you're building.</em>
+    </h1>
+
+    <p>
+        Your repertoire, fundamentals, and audition material —
+        organized around how you actually practice.
+    </p>
+
+</section>
+
+
+
+<section class="section-block">
+
+    <div class="section-heading">
+
+        <div>
+            <p class="label">REPERTOIRE</p>
+            <h2>Your library</h2>
+        </div>
+
+        <span class="count-label">
+            {{ repertoire|length }} pieces
+        </span>
+
+    </div>
+
+
+    <div class="library-grid">
+
+        {% for piece in repertoire %}
+
+        <div class="library-card">
+
+            <div class="library-card-top">
+
+                <span class="category">
+                    {{ piece.category }}
+                </span>
+
+                <form
+                    action="{{ url_for('delete_repertoire', repertoire_id=piece.id) }}"
+                    method="POST"
+                >
+
+                    <button
+                        class="delete-button"
+                        type="submit"
+                    >
+                        ×
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <h3>
+                {{ piece.title }}
+            </h3>
+
+
+            {% if piece.composer %}
+            <p class="composer">
+                {{ piece.composer }}
+            </p>
+            {% endif %}
+
+
+            <div class="library-card-footer">
+
+                <span>
+                    Target practice
+                </span>
+
+                <strong>
+                    {{ piece.target_minutes }}m
+                </strong>
+
+            </div>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state">
+            Your library is empty.
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+
+
+<section class="section-block form-section">
+
+    <div class="section-heading">
+
+        <div>
+            <p class="label">NEW</p>
+            <h2>Add repertoire</h2>
+        </div>
+
+    </div>
+
+
+    <form
+        class="product-form"
+        action="{{ url_for('add_repertoire') }}"
+        method="POST"
+    >
+
+        <div class="form-grid">
+
+            <label>
+
+                <span>Title</span>
+
+                <input
+                    type="text"
+                    name="title"
+                    placeholder="e.g. Mozart Horn Concerto"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+
+                <span>Composer</span>
+
+                <input
+                    type="text"
+                    name="composer"
+                    placeholder="Composer"
+                >
+
+            </label>
+
+
+            <label>
+
+                <span>Category</span>
+
+                <select name="category">
+
+                    <option>Repertoire</option>
+                    <option>Audition</option>
+                    <option>Performance</option>
+                    <option>Fundamentals</option>
+                    <option>Warm-up</option>
+                    <option>Other</option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+
+                <span>Target minutes</span>
+
+                <input
+                    type="number"
+                    name="target_minutes"
+                    value="15"
+                    min="1"
+                    max="180"
+                >
+
+            </label>
+
+        </div>
+
+
+        <label>
+
+            <span>Notes</span>
+
+            <textarea
+                name="notes"
+                placeholder="What do you want to work on?"
+                rows="3"
+            ></textarea>
+
+        </label>
+
+
+        <button
+            class="primary-button form-button"
+            type="submit"
+        >
+            Add to library
+            <span>→</span>
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Set up HornLab{% endblock %}
+
+{% block content %}
+
+<section class="onboarding">
+
+    <div class="onboarding-header">
+
+        <div class="eyebrow">
+            HORN//LAB
+        </div>
+
+        <h1>
+            Before we<br>
+            <em>start.</em>
+        </h1>
+
+        <p>
+            A couple things first. HornLab uses these details
+            to make your practice workspace feel like yours.
+        </p>
+
+    </div>
+
+
+    <form
+        id="setupForm"
+        class="onboarding-form"
+    >
+
+        <div class="setup-field">
+
+            <label for="name">
+                YOUR NAME
+            </label>
+
+            <input
+                type="text"
+                id="name"
+                placeholder="Your name"
+                autocomplete="off"
+                required
+            >
+
+        </div>
+
+
+        <div class="setup-field">
+
+            <label for="instrument">
+                INSTRUMENT
+            </label>
+
+            <input
+                type="text"
+                id="instrument"
+                value="French horn"
+                required
+            >
+
+        </div>
+
+
+        <div class="setup-field">
+
+            <label>
+                USUAL PRACTICE TIME
+            </label>
+
+            <div class="time-choice">
+
+                <button
+                    type="button"
+                    data-time="10"
+                >
+                    10
+                </button>
+
+                <button
+                    type="button"
+                    data-time="20"
+                >
+                    20
+                </button>
+
+                <button
+                    type="button"
+                    data-time="30"
+                    class="selected"
+                >
+                    30
+                </button>
+
+                <button
+                    type="button"
+                    data-time="45"
+                >
+                    45
+                </button>
+
+                <button
+                    type="button"
+                    data-time="60"
+                >
+                    60
+                </button>
+
+            </div>
+
+            <div class="time-label">
+                minutes
+            </div>
+
+            <input
+                type="hidden"
+                id="typicalTime"
+                value="30"
+            >
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="onboarding-button"
+        >
+
+            <span>
+                Create my workspace
+            </span>
+
+            <span>
+                →
+            </span>
+
+        </button>
+
+    </form>
+
+</section>
+
+
+<script>
+
+const timeButtons =
+    document.querySelectorAll(
+        ".time-choice button"
+    );
+
+const typicalTime =
+    document.getElementById(
+        "typicalTime"
+    );
+
+
+timeButtons.forEach(
+    function (button) {
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                timeButtons.forEach(
+                    function (item) {
+                        item.classList.remove(
+                            "selected"
+                        );
+                    }
+                );
+
+                this.classList.add(
+                    "selected"
+                );
+
+                typicalTime.value =
+                    this.dataset.time;
+
+            }
+        );
+
+    }
+);
+
+
+document
+    .getElementById("setupForm")
+    .addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+            const submitButton =
+                this.querySelector(
+                    "button[type='submit']"
+                );
+
+            submitButton.disabled = true;
+
+            submitButton.querySelector(
+                "span"
+            ).textContent =
+                "Creating workspace...";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/profiles",
+                        {
+
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+
+                                    name:
+                                        document
+                                            .getElementById(
+                                                "name"
+                                            )
+                                            .value,
+
+                                    instrument:
+                                        document
+                                            .getElementById(
+                                                "instrument"
+                                            )
+                                            .value,
+
+                                    typical_time:
+                                        typicalTime.value
+
+                                })
+
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error ||
+                        "Something went wrong."
+                    );
+
+                }
+
+                if (data.success) {
+
+                    window.location.href =
+                        "/?profile=" +
+                        data.profile.id;
+
+                }
+
+            } catch (error) {
+
+                alert(error.message);
+
+                submitButton.disabled = false;
+
+                submitButton.querySelector(
+                    "span"
+                ).textContent =
+                    "Create my workspace";
+
+            }
+
+        }
+    );
+
+</script>
+
+{% endblock %}
