@@ -65,6 +65,35 @@ To stop HornLab, return to the terminal and press **Ctrl+C**. Closing the browse
 6. Review the actual minutes and practiced items, add notes, and save the session.
 7. Open **Progress** to see your history and export it.
 
+## Make your practice specific
+
+1. Open **Repertoire**, then **Add passage** under Passage goals.
+2. Choose a piece and enter a measure range or goal, such as “Measures 24–32 · clean attacks.”
+3. Set your starting tempo, target tempo, clean repetition goal, and tempo unit.
+4. Build a new session. The passage step shows a specific goal and, after your first result, where you left off.
+5. When saving the session, select **Record** beside a passage and enter the tempo and clean repetitions you actually achieved. You can enter zero clean repetitions.
+6. Open **Progress → Passage progress → History** to compare results. Your next plan uses the new result automatically.
+
+The suggested tempo stays the same until you meet the repetition goal, then increases by 4 BPM, capped at your target. These are suggestions based on your entries; HornLab does not listen to or grade your playing.
+
+## Customize the metronome
+
+The **Custom metronome** panel on **Today** works even before you build a session.
+
+- Choose a meter preset, or set the number of beats and written beat value yourself.
+- In 6/8, 9/8, or 12/8, choose individual written beats or groups of three. For example, 6/8 can be six eighth-note beats or two dotted-quarter beats.
+- The tempo label tells you which note value the BPM measures. Changing the counting mode keeps the displayed BPM, so it changes the bar duration; adjust BPM if you want the same musical pace.
+- Choose 1–4 equally spaced clicks per counted beat.
+- Click each beat button to cycle **strong → normal → silent**. A silent beat also silences its subdivisions.
+- Adjust volume or tap **Tap tempo** repeatedly to set the pace.
+- Changes restart the pattern on beat 1. Settings are saved for the selected profile in this browser. Sound stops when the tab is hidden.
+
+**Use tempo in metronome** on a passage applies its suggested tempo. If the current tempo unit matches, your meter and accents are preserved. If it differs, HornLab chooses a matching meter and displays the new note value.
+
+## Updating an older copy
+
+Stop HornLab with **Ctrl+C**, back up `instance/hornlab.db`, and download the latest upgrade branch. Use the data section below to carry your database into the new folder. Run the installation command and start the app from that updated folder, then refresh the browser. Downloading new files does not update an already-running server.
+
 ## Troubleshooting
 
 | What you see | What to do |

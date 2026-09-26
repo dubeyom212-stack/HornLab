@@ -69,6 +69,230 @@ class SessionReceipt(db.Model):
     )
 
 
+class Passage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(
+        db.Integer, db.ForeignKey("practice_item.id"), nullable=False, index=True
+    )
+    label = db.Column(db.String(200), nullable=False)
+    start_tempo = db.Column(db.Integer, nullable=False, default=60)
+    target_tempo = db.Column(db.Integer, nullable=False, default=100)
+    target_reps = db.Column(db.Integer, nullable=False, default=3)
+    tempo_unit = db.Column(db.String(20), nullable=False, default="quarter")
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    item = db.relationship("PracticeItem")
+    results = db.relationship("PassageResult", backref="passage", lazy=True)
+
+
+class PassageResult(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    passage_id = db.Column(
+        db.Integer, db.ForeignKey("passage.id"), nullable=False, index=True
+    )
+    session_id = db.Column(
+        db.Integer, db.ForeignKey("practice_session.id"), nullable=False
+    )
+    tempo = db.Column(db.Integer, nullable=False)
+    clean_reps = db.Column(db.Integer, nullable=False)
+    notes = db.Column(db.String(1000), nullable=False, default="")
+    tempo_unit = db.Column(db.String(20), nullable=False)
+    target_tempo = db.Column(db.Integer, nullable=False)
+    target_reps = db.Column(db.Integer, nullable=False)
+    session = db.relationship("PracticeSession")
+    __table_args__ = (db.UniqueConstraint("passage_id", "session_id"),)
+
+
+TEMPO_UNITS = {"quarter", "eighth", "dotted-quarter", "half"}
+
+
+def passage_values(data):
+    start = integer(data.get("start_tempo", 60), "Starting tempo", 30, 240)
+    target = integer(data.get("target_tempo", 100), "Target tempo", 30, 240)
+    if start > target:
+        raise ValueError("Starting tempo cannot exceed the target tempo.")
+    return dict(
+        label=text_value(data.get("label"), "Passage name or measures", 200),
+        start_tempo=start,
+        target_tempo=target,
+        target_reps=integer(data.get("target_reps", 3), "Clean repetition goal", 1, 20),
+        tempo_unit=choice(data.get("tempo_unit", "quarter"), TEMPO_UNITS, "tempo unit"),
+    )
+
+
+def passage_summary(passage):
+    rows = sorted(passage.results, key=lambda r: r.id, reverse=True)
+    comparable = [r for r in rows if r.tempo_unit == passage.tempo_unit]
+    last = comparable[0] if comparable else None
+    reached = bool(
+        last
+        and last.tempo >= passage.target_tempo
+        and last.clean_reps >= passage.target_reps
+    )
+    tempo = (
+        passage.start_tempo
+        if not last
+        else min(
+            passage.target_tempo,
+            last.tempo + (4 if last.clean_reps >= passage.target_reps else 0),
+        )
+    )
+    if reached:
+        next_step = f"Review at {passage.target_tempo} BPM; aim for {passage.target_reps} clean repetitions again."
+    elif not last:
+        next_step = f"Establish a baseline at {tempo} BPM with {passage.target_reps} clean repetitions."
+    elif last.clean_reps < passage.target_reps:
+        next_step = f"Stay at {tempo} BPM. Aim for {passage.target_reps} clean repetitions before increasing."
+    else:
+        next_step = f"Try {tempo} BPM. Aim for {passage.target_reps} clean repetitions; slow down if consistency drops."
+    return dict(
+        id=passage.id,
+        item_id=passage.item_id,
+        item_title=passage.item.title,
+        item_active=passage.item.active,
+        label=passage.label,
+        active=passage.active,
+        start_tempo=passage.start_tempo,
+        target_tempo=passage.target_tempo,
+        target_reps=passage.target_reps,
+        tempo_unit=passage.tempo_unit,
+        suggested_tempo=tempo,
+        goal_reached=reached,
+        next_step=next_step,
+        last_result=dict(
+            tempo=last.tempo,
+            clean_reps=last.clean_reps,
+            notes=last.notes,
+            date=last.session.date,
+        )
+        if last
+        else None,
+        best_clean_tempo=max(
+            (r.tempo for r in comparable if r.clean_reps >= passage.target_reps),
+            default=None,
+        ),
+        result_count=len(rows),
+        history=[
+            dict(
+                tempo=r.tempo,
+                clean_reps=r.clean_reps,
+                notes=r.notes,
+                tempo_unit=r.tempo_unit,
+                date=r.session.date,
+                target_tempo=r.target_tempo,
+                target_reps=r.target_reps,
+            )
+            for r in rows[:20]
+        ],
+    )
+
+
+def chosen_passage(item):
+    passages = [
+        passage_summary(p)
+        for p in Passage.query.filter_by(item_id=item.id, active=True).all()
+    ]
+    # Unfinished goals come first; rotate by the oldest recorded practice date.
+    return (
+        min(
+            passages,
+            key=lambda p: (
+                p["goal_reached"],
+                (p["last_result"] or {}).get("date", ""),
+                p["id"],
+            ),
+        )
+        if passages
+        else None
+    )
+
+
+@bp.get("/api/passages")
+def list_passages():
+    profile = get_profile(request.args.get("profile"))
+    passages = (
+        Passage.query.join(PracticeItem)
+        .filter(PracticeItem.profile_id == profile.id)
+        .order_by(Passage.id)
+        .all()
+    )
+    return jsonify([passage_summary(p) for p in passages])
+
+
+@bp.post("/api/passages")
+def add_passage():
+    data = body()
+    profile = get_profile(data.get("profile_id"))
+    item = db.get_or_404(
+        PracticeItem, integer(data.get("item_id"), "Item", 1, 2147483647)
+    )
+    if item.profile_id != profile.id or not item.active:
+        raise ValueError("Choose an active item in this profile.")
+    passage = Passage(item_id=item.id, **passage_values(data))
+    db.session.add(passage)
+    db.session.commit()
+    return jsonify(success=True, passage=passage_summary(passage)), 201
+
+
+@bp.patch("/api/passages/<int:passage_id>")
+def edit_passage(passage_id):
+    data = body()
+    profile = get_profile(data.get("profile_id"))
+    passage = db.get_or_404(Passage, passage_id)
+    if passage.item.profile_id != profile.id:
+        return jsonify(error="Passage not found in this profile."), 404
+    values = passage_values({**passage_summary(passage), **data})
+    active = data.get("active", passage.active)
+    if not isinstance(active, bool):
+        raise ValueError("Active must be true or false.")
+    for key, value in values.items():
+        setattr(passage, key, value)
+    passage.active = active
+    db.session.commit()
+    return jsonify(success=True, passage=passage_summary(passage))
+
+
+def validate_passage_results(data, profile):
+    rows = data.get("passage_results", [])
+    if not isinstance(rows, list) or len(rows) > 100:
+        raise ValueError("Passage results must be a list of up to 100 entries.")
+    results, seen = [], set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("Each passage result must be an object.")
+        passage_id = integer(row.get("passage_id"), "Passage ID", 1, 2147483647)
+        if passage_id in seen:
+            raise ValueError("Record each passage once per session.")
+        seen.add(passage_id)
+        passage = db.session.get(Passage, passage_id)
+        if not passage or passage.item.profile_id != profile.id:
+            raise ValueError("A passage does not belong to this profile.")
+        unit = choice(
+            row.get("tempo_unit", passage.tempo_unit), TEMPO_UNITS, "tempo unit"
+        )
+        if unit != passage.tempo_unit:
+            raise ValueError(
+                "This passage's tempo unit changed. Refresh the page before saving a result."
+            )
+        results.append(
+            (
+                passage,
+                dict(
+                    tempo=integer(row.get("tempo"), "Achieved tempo", 30, 240),
+                    clean_reps=integer(
+                        row.get("clean_reps"), "Clean repetitions", 0, 100
+                    ),
+                    notes=text_value(
+                        row.get("notes", ""), "Passage note", 1000, required=False
+                    ),
+                    tempo_unit=unit,
+                    target_tempo=passage.target_tempo,
+                    target_reps=passage.target_reps,
+                ),
+            )
+        )
+    return results
+
+
 def body():
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
@@ -303,7 +527,21 @@ def action_for(item):
 
 def build_plan(profile, minutes, mode="balanced"):
     items = PracticeItem.query.filter_by(profile_id=profile.id, active=True).all()
-    ranked = sorted(items, key=lambda item: (-item_score(item, mode), item.id))
+    passages = {item.id: chosen_passage(item) for item in items}
+    ranked = sorted(
+        items,
+        key=lambda item: (
+            -(
+                item_score(item, mode)
+                + (
+                    0.3
+                    if passages[item.id] and not passages[item.id]["goal_reached"]
+                    else 0
+                )
+            ),
+            item.id,
+        ),
+    )
     if not ranked:
         return []
     warmup = (
@@ -347,12 +585,26 @@ def build_plan(profile, minutes, mode="balanced"):
                 instruction="Isolate a tricky phrase. Play slowly, then reconnect it to the surrounding music.",
                 success="Three relaxed, consistent repetitions",
             )
+        passage = passages[item.id]
+        if passage:
+            last = passage["last_result"]
+            previous = (
+                f"Last: {last['tempo']} BPM, {last['clean_reps']} clean repetitions. "
+                if last
+                else ""
+            )
+            action = dict(
+                focus=passage["label"],
+                instruction=previous + passage["next_step"],
+                success=f"{passage['target_reps']} clean repetitions at {passage['suggested_tempo']} BPM ({passage['tempo_unit']} note)",
+            )
         plan.append(
             dict(
                 title=item.title,
                 duration=duration,
                 type=item.category,
                 item_id=item.id,
+                passage=passage,
                 priority=item.priority == "high",
                 **action,
             )
@@ -485,6 +737,7 @@ def save_session():
         if not item or item.profile_id != profile.id:
             raise ValueError("A completed item does not belong to this profile.")
         completed.append(item)
+    passage_results = validate_passage_results(data, profile)
     session_date = date.today().isoformat()
     practice = PracticeSession(
         profile_id=profile.id,
@@ -498,6 +751,11 @@ def save_session():
     db.session.add(
         SessionReceipt(token=token, profile_id=profile.id, session_id=practice.id)
     )
+    for passage, values in passage_results:
+        db.session.add(
+            PassageResult(passage_id=passage.id, session_id=practice.id, **values)
+        )
+        passage.item.last_practiced = session_date
     for item in completed:
         item.last_practiced = session_date
     try:

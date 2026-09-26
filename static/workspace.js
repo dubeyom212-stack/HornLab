@@ -14,6 +14,7 @@ const state = {
     items: [],
     insights: null,
     sessions: [],
+    passages: [],
     practice: null,
     metro: null,
     audio: null,
@@ -154,21 +155,24 @@ async function selectProfile(id) {
     const url = new URL(location);
     url.searchParams.set('profile', state.profile.id);
     history.replaceState(null, '', url);
+    loadMetronome();
     loadPractice();
     await refresh();
 }
 async function refresh() {
     const id = state.profile.id;
-    const [items, insights, sessions] = await Promise.all([api(`/api/items?profile=${id}`), api(`/api/insights?profile=${id}`), api(`/api/sessions?profile=${id}`)]);
+    const [items, insights, sessions, passages] = await Promise.all([api(`/api/items?profile=${id}`), api(`/api/insights?profile=${id}`), api(`/api/sessions?profile=${id}`), api(`/api/passages?profile=${id}`)]);
     if (state.profile.id !== id) return;
     Object.assign(state, {
         items,
         insights,
-        sessions
+        sessions,
+        passages
     });
     renderOverview();
     renderLibrary();
     renderProgress();
+    renderPassages();
 }
 
 function renderOverview() {
@@ -277,6 +281,9 @@ function renderPractice() {
     $('stepSuccess').textContent = `Aim for: ${step.success}`;
     $('nextStep').textContent = p.index === p.plan.length - 1 ? 'Complete & review ✓' : 'Complete step →';
     $('planSteps').innerHTML = p.plan.map((s, i) => `<li class="${i===p.index?'current':i<p.index?'done':''}"><div><strong>${escapeHTML(s.title)}</strong><small>${s.duration} min · ${escapeHTML(s.focus)}</small></div></li>`).join('');
+    const passage = step.passage;
+    $('passageCue').hidden = !passage;
+    if (passage) $('passageCue').innerHTML = `<span class="small-caps">PASSAGE GOAL</span><h3>${escapeHTML(passage.label)}</h3><p>Target: ${passage.target_tempo} BPM · ${escapeHTML(passage.tempo_unit)} note · ${passage.target_reps} clean repetitions</p>${passage.last_result?.notes ? `<p>Last note: ${escapeHTML(passage.last_result.notes)}</p>` : ''}<button class="secondary" id="usePassageTempo">Use ${passage.suggested_tempo} BPM in metronome</button>`;
     updateTimer();
 }
 async function buildPlan() {
@@ -332,51 +339,130 @@ function openSave(manual = false) {
     form.elements.duration.value = p ? Math.max(1, Math.round(p.elapsed / 60)) : state.profile.typical_time;
     const items = state.items.filter(i => i.active || p?.completed.includes(i.id));
     $('completedChoices').innerHTML = items.map(i => `<label><input type="checkbox" name="completed" value="${i.id}" ${p?.completed.includes(i.id)?'checked':''}>${escapeHTML(i.title)}</label>`).join('') || '<span class="quiet">No repertoire items yet.</span>';
+    renderResultInputs(p);
     openDialog('saveDialog');
 }
 
+let metroSettings = HornMetronome.normalize();
+let metroWanted = false;
+let tapTimes = [];
+const metroEngine = new HornMetronome.Engine({
+    onTick(event) {
+        document.querySelectorAll('[data-beat]').forEach(button => button.classList.toggle('playing', Number(button.dataset.beat) === event.beat));
+        $('beatLight').textContent = `${event.beat + 1}${event.sub ? ' · ' + (event.sub + 1) : ''}`;
+    }
+});
+
 function stopMetronome() {
-    if (state.metro) clearInterval(state.metro);
-    state.metro = null;
-    if (state.audio?.state === 'running') state.audio.suspend().catch(() => {});
+    metroWanted = false;
+    metroEngine.stop();
     $('metronomeToggle').textContent = 'Play metronome';
     $('metronomeToggle').setAttribute('aria-pressed', 'false');
-    $('beatLight').classList.remove('pulse');
+    $('beatLight').textContent = '●';
+    document.querySelectorAll('[data-beat]').forEach(b => b.classList.remove('playing'));
 }
 async function startMetronome() {
-    if (!state.audio) {
-        const Audio = window.AudioContext || window.webkitAudioContext;
-        if (!Audio) throw new Error('This browser does not support the metronome.');
-        state.audio = new Audio();
-    }
-    await state.audio.resume();
-    let beat = 0;
-    const tick = () => {
-        if (document.hidden) {
-            stopMetronome();
-            return;
-        }
-        const oscillator = state.audio.createOscillator(),
-            gain = state.audio.createGain(),
-            now = state.audio.currentTime;
-        oscillator.frequency.value = beat++ % 4 === 0 ? 1100 : 800;
-        gain.gain.setValueAtTime(.15, now);
-        gain.gain.exponentialRampToValueAtTime(.001, now + .055);
-        oscillator.connect(gain);
-        gain.connect(state.audio.destination);
-        oscillator.onended = () => {
-            oscillator.disconnect();
-            gain.disconnect();
-        };
-        oscillator.start(now);
-        oscillator.stop(now + .06);
-        $('beatLight').classList.add('pulse');
-        setTimeout(() => $('beatLight').classList.remove('pulse'), 80);
-    };
-    tick();
-    state.metro = setInterval(tick, 60000 / Number($('bpm').value));
+    metroWanted = true;
     $('metronomeToggle').textContent = 'Stop metronome';
     $('metronomeToggle').setAttribute('aria-pressed', 'true');
+    try {
+        await metroEngine.start(metroSettings);
+    } catch (error) {
+        stopMetronome();
+        throw new Error('Audio could not start. Try the Play button again in a browser with Web Audio support.');
+    }
+}
+
+function renderMetronome() {
+    const s = metroSettings;
+    $('bpm').value = s.bpm;
+    $('bpmNumber').value = s.bpm;
+    $('bpmLabel').textContent = `${s.bpm} BPM · ${s.unit} note`;
+    $('meterNumerator').value = s.numerator;
+    $('meterDenominator').value = s.denominator;
+    const signature = `${s.numerator}/${s.denominator}`;
+    $('meterPreset').value = ['2/4', '3/4', '4/4', '5/4', '6/8', '7/8', '9/8', '12/8'].includes(signature) ? signature : 'custom';
+    $('meterCount').value = s.compound ? 'compound' : 'written';
+    $('meterCount').querySelector('[value="compound"]').disabled = !(s.denominator === 8 && s.numerator >= 6 && s.numerator % 3 === 0);
+    $('subdivision').value = s.subdivision;
+    $('metroVolume').value = s.volume;
+    $('beatButtons').innerHTML = s.accents.map((accent, i) => `<button type="button" data-beat="${i}" class="accent-${accent}" aria-label="Beat ${i+1}: ${['silent','normal','strong'][accent]}. Change accent.">${i+1}<small>${['silent','normal','strong'][accent]}</small></button>`).join('');
+    $('meterDescription').textContent = `${signature}: ${s.beats} ${s.unit}-note beats per bar, ${s.subdivision} click${s.subdivision === 1 ? '' : 's'} per beat. BPM refers to the ${s.unit} note. Changes restart on beat 1.`;
+}
+
+function loadMetronome() {
+    let saved;
+    try {
+        saved = JSON.parse(storage.get(`hornlab:metronome:${state.profile.id}`));
+    } catch {}
+    metroSettings = HornMetronome.normalize(saved || {});
+    tapTimes = [];
+    renderMetronome();
+}
+async function configureMetronome(changes, resetAccents = false) {
+    const running = metroWanted;
+    stopMetronome();
+    metroSettings = HornMetronome.normalize({
+        ...metroSettings,
+        ...changes,
+        ...(resetAccents ? {
+            accents: []
+        } : {})
+    });
+    storage.set(`hornlab:metronome:${state.profile.id}`, JSON.stringify(metroSettings));
+    renderMetronome();
+    if (running && !document.hidden) await startMetronome();
+}
+
+function renderPassages() {
+    const showArchived = $('showArchivedPassages').checked;
+    const passages = state.passages.filter(p => showArchived || (p.active && p.item_active));
+    const card = p => `<article class="passage-card"><div class="section-top"><span class="tag">${escapeHTML(p.item_title)}</span><span class="tag ${p.goal_reached ? '' : 'urgent'}">${!p.active || !p.item_active ? 'Archived' : p.goal_reached ? 'Goal met · review' : 'Building consistency'}</span></div><h3>${escapeHTML(p.label)}</h3><p>Goal: ${p.target_reps} clean repetitions at ${p.target_tempo} BPM · ${escapeHTML(p.tempo_unit)} note</p><div class="passage-metrics"><span>Last result<strong>${p.last_result ? `${p.last_result.tempo} BPM · ${p.last_result.clean_reps} clean reps` : 'No result yet'}</strong></span><span>Best clean tempo<strong>${p.best_clean_tempo ? p.best_clean_tempo + ' BPM' : 'Not reached yet'}</strong></span></div><p class="next-practice">Next: ${escapeHTML(p.next_step)}</p>${p.last_result?.notes ? `<p class="passage-note">${escapeHTML(p.last_result.notes)}</p>` : ''}<div class="button-row"><button class="secondary" data-passage-history="${p.id}">History (${p.result_count})</button><button class="text-button" data-passage-edit="${p.id}">Edit goal</button><button class="text-button" data-passage-archive="${p.id}">${p.active ? 'Archive passage' : 'Restore passage'}</button></div></article>`;
+    $('passageList').innerHTML = passages.map(card).join('') || empty('Give the next session a clear purpose.', 'Add a measure range, starting tempo, and repetition goal.');
+    $('passageProgress').innerHTML = state.passages.filter(p => p.active && p.item_active).map(card).join('') || empty('Progress beyond the clock.', 'Add a passage goal in Repertoire, then record your results after practice.');
+}
+
+function editPassage(id) {
+    const passage = state.passages.find(p => p.id === Number(id));
+    const items = state.items.filter(i => i.active || i.id === passage?.item_id);
+    if (!items.length) {
+        notify('Add a repertoire item before creating a passage goal.');
+        editItem();
+        return;
+    }
+    const form = $('passageForm');
+    form.reset();
+    $('passageItem').innerHTML = items.map(i => `<option value="${i.id}">${escapeHTML(i.title)}</option>`).join('');
+    $('passageItem').disabled = !!passage;
+    form.elements.id.value = passage?.id || '';
+    if (passage)
+        for (const key of ['item_id', 'label', 'start_tempo', 'target_tempo', 'target_reps', 'tempo_unit']) form.elements[key].value = passage[key];
+    $('passageDialogTitle').textContent = passage ? 'Refine your passage goal' : 'Add a passage goal';
+    openDialog('passageDialog');
+}
+
+function showPassageHistory(id) {
+    const p = state.passages.find(p => p.id === Number(id));
+    $('passageHistoryTitle').textContent = p.label;
+    $('passageHistorySummary').textContent = `${p.item_title} · Latest 20 of ${p.result_count} self-reported results. Historical goals are kept with each result.`;
+    $('passageHistoryRows').innerHTML = p.history.map(r => `<article class="passage-history-row"><strong>${r.tempo} BPM · ${r.clean_reps} clean reps</strong><small>${escapeHTML(dayText(r.date))} · ${escapeHTML(r.tempo_unit)} note</small><p>Goal then: ${r.target_reps} clean reps at ${r.target_tempo} BPM</p>${r.notes ? `<p>${escapeHTML(r.notes)}</p>` : ''}</article>`).join('') || empty('Start with an honest baseline.', 'Record your first result after a session.');
+    openDialog('passageHistoryDialog');
+}
+
+function renderResultInputs(practice) {
+    const ids = practice ? new Set(practice.plan.slice(0, practice.index + 1).filter(s => s.passage).map(s => s.passage.id)) : null;
+    const passages = state.passages.filter(p => ids ? ids.has(p.id) : p.active && p.item_active);
+    $('passageResults').innerHTML = passages.map(p => `<div class="passage-result" data-result="${p.id}" data-unit="${p.tempo_unit}"><label class="inline-check"><input type="checkbox" data-record>Record ${escapeHTML(p.item_title)} · ${escapeHTML(p.label)}</label><div class="result-fields" hidden><p class="quiet">Goal: ${p.target_reps} clean repetitions at ${p.target_tempo} BPM · ${escapeHTML(p.tempo_unit)} note</p><div class="form-grid"><label>Achieved tempo (BPM)<input data-tempo type="number" min="30" max="240" required disabled></label><label>Clean repetitions<input data-reps type="number" min="0" max="100" required disabled></label></div><label>What needs attention next?<textarea data-result-note maxlength="1000" rows="2" disabled></textarea></label></div></div>`).join('') || '<p class="quiet">No passage goals in this session yet. Add them in Repertoire for specific feedback next time.</p>';
+}
+
+function collectResults() {
+    return [...document.querySelectorAll('[data-result]')].filter(row => row.querySelector('[data-record]').checked).map(row => ({
+        passage_id: Number(row.dataset.result),
+        tempo_unit: row.dataset.unit,
+        tempo: Number(row.querySelector('[data-tempo]').value),
+        clean_reps: Number(row.querySelector('[data-reps]').value),
+        notes: row.querySelector('[data-result-note]').value
+    }));
 }
 
 function handleForm(id, submit) {
@@ -433,6 +519,7 @@ handleForm('saveForm', async form => {
         focus: form.elements.focus.value,
         duration: Number(form.elements.duration.value),
         notes: form.elements.notes.value,
+        passage_results: collectResults(),
         completed_item_ids: [...form.querySelectorAll('input[name="completed"]:checked')].map(el => Number(el.value))
     });
     if (p) {
@@ -445,11 +532,84 @@ handleForm('saveForm', async form => {
     notify('Session saved. A little more progress, in the books.');
 });
 
+handleForm('passageForm', async form => {
+    const data = Object.fromEntries(new FormData(form));
+    const id = data.id;
+    delete data.id;
+    data.profile_id = state.profile.id;
+    for (const key of ['start_tempo', 'target_tempo', 'target_reps']) data[key] = Number(data[key]);
+    if (!id) data.item_id = Number(data.item_id);
+    await api(id ? `/api/passages/${id}` : '/api/passages', id ? 'PATCH' : 'POST', data);
+    $('passageDialog').close();
+    await refresh();
+    notify('Passage goal saved. New plans will use it.');
+});
+$('addPassage').addEventListener('click', () => editPassage());
+$('showArchivedPassages').addEventListener('change', renderPassages);
+$('passageResults').addEventListener('change', event => {
+    if (!event.target.matches('[data-record]')) return;
+    const row = event.target.closest('[data-result]');
+    row.querySelector('.result-fields').hidden = !event.target.checked;
+    row.querySelectorAll('.result-fields input, .result-fields textarea').forEach(el => el.disabled = !event.target.checked);
+});
+
 function renderProfiles() {
     $('profileSelect').innerHTML = state.profiles.map(p => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join('') || '<option>Create your first profile</option>';
 }
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
 document.addEventListener('click', guard(async event => {
+    const passageEdit = event.target.closest('[data-passage-edit]');
+    if (passageEdit) editPassage(passageEdit.dataset.passageEdit);
+    const passageHistory = event.target.closest('[data-passage-history]');
+    if (passageHistory) showPassageHistory(passageHistory.dataset.passageHistory);
+    const passageArchive = event.target.closest('[data-passage-archive]');
+    if (passageArchive) {
+        const passage = state.passages.find(p => p.id === Number(passageArchive.dataset.passageArchive));
+        await api(`/api/passages/${passage.id}`, 'PATCH', {
+            profile_id: state.profile.id,
+            active: !passage.active
+        });
+        await refresh();
+    }
+    const beat = event.target.closest('[data-beat]');
+    if (beat) {
+        const accents = [...metroSettings.accents];
+        const i = Number(beat.dataset.beat);
+        accents[i] = (accents[i] + 2) % 3;
+        await configureMetronome({
+            accents
+        });
+    }
+    if (event.target.closest('#usePassageTempo')) {
+        const passage = state.practice.plan[state.practice.index].passage;
+        const meter = passage.tempo_unit === 'dotted-quarter' ? {
+            numerator: 6,
+            denominator: 8,
+            compound: true,
+            subdivision: 3
+        } : {
+            numerator: 4,
+            denominator: ({
+                half: 2,
+                quarter: 4,
+                eighth: 8
+            })[passage.tempo_unit],
+            compound: false,
+            subdivision: 1
+        };
+        if (metroSettings.unit === passage.tempo_unit) await configureMetronome({
+            bpm: passage.suggested_tempo
+        });
+        else await configureMetronome({
+            ...meter,
+            bpm: passage.suggested_tempo
+        }, true);
+        $('metroPanel').open = true;
+        $('metroPanel').scrollIntoView({
+            behavior: 'smooth'
+        });
+        notify(`Metronome set to ${passage.suggested_tempo} BPM per ${passage.tempo_unit} note.`);
+    }
     const add = event.target.closest('[data-add]');
     if (add) editItem();
     const edit = event.target.closest('[data-edit]');
@@ -516,15 +676,67 @@ $('nextStep').addEventListener('click', () => {
 $('finishSession').addEventListener('click', () => openSave());
 $('manualSession').addEventListener('click', () => openSave(true));
 $('metronomeToggle').addEventListener('click', guard(async () => {
-    if (state.metro) stopMetronome();
+    if (metroWanted) stopMetronome();
     else await startMetronome();
 }));
-$('bpm').addEventListener('input', guard(async () => {
-    $('bpmLabel').textContent = `${$('bpm').value} BPM`;
-    if (state.metro) {
-        stopMetronome();
-        await startMetronome();
+for (const id of ['bpm', 'bpmNumber']) $(id).addEventListener(id === 'bpm' ? 'input' : 'change', guard(async () => {
+    const bpm = Number($(id).value);
+    if (!Number.isInteger(bpm) || bpm < 30 || bpm > 240) {
+        renderMetronome();
+        throw new Error('Choose a tempo from 30 to 240 BPM.');
     }
+    await configureMetronome({
+        bpm
+    });
+}));
+$('meterPreset').addEventListener('change', guard(async () => {
+    if ($('meterPreset').value === 'custom') {
+        $('meterNumerator').focus();
+        return;
+    }
+    const [numerator, denominator] = $('meterPreset').value.split('/').map(Number);
+    const compound = denominator === 8 && numerator % 3 === 0;
+    await configureMetronome({
+        numerator,
+        denominator,
+        compound,
+        subdivision: compound ? 3 : 1
+    }, true);
+}));
+$('meterNumerator').addEventListener('change', guard(async () => {
+    const numerator = Number($('meterNumerator').value);
+    if (!Number.isInteger(numerator) || numerator < 1 || numerator > 12) {
+        renderMetronome();
+        throw new Error('Choose 1 to 12 beats per bar.');
+    }
+    await configureMetronome({
+        numerator
+    }, true);
+}));
+$('meterDenominator').addEventListener('change', guard(() => configureMetronome({
+    denominator: Number($('meterDenominator').value)
+}, true)));
+$('meterCount').addEventListener('change', guard(() => configureMetronome({
+    compound: $('meterCount').value === 'compound'
+}, true)));
+$('subdivision').addEventListener('change', guard(() => configureMetronome({
+    subdivision: Number($('subdivision').value)
+})));
+$('metroVolume').addEventListener('change', guard(() => configureMetronome({
+    volume: Number($('metroVolume').value)
+})));
+$('tapTempo').addEventListener('click', guard(async () => {
+    const now = performance.now();
+    if (tapTimes.length && now - tapTimes.at(-1) > 2200) tapTimes = [];
+    tapTimes.push(now);
+    tapTimes = tapTimes.slice(-6);
+    if (tapTimes.length > 1) {
+        const bpm = Math.round(60000 * (tapTimes.length - 1) / (tapTimes.at(-1) - tapTimes[0]));
+        if (bpm >= 30 && bpm <= 240) await configureMetronome({
+            bpm
+        });
+        else notify('Tap between 30 and 240 beats per minute.');
+    } else notify('Keep tapping at your desired tempo.');
 }));
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) stopMetronome();

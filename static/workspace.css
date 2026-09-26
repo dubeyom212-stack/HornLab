@@ -1579,3 +1579,264 @@ legend {
         scroll-behavior: auto !important
     }
 }
+
+/* Practice feedback and configurable pulse */
+.metro-panel {
+    margin-top: 24px;
+}
+
+.metro-panel summary {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    cursor: pointer;
+    font-family: var(--serif);
+    font-size: 27px;
+}
+
+.metro-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-top: 22px;
+}
+
+.metro-tempo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.metro-tempo label {
+    flex: 1;
+    min-width: 150px;
+}
+
+.metro-tempo input {
+    width: 90px;
+    font-size: 23px;
+}
+
+.metro-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+#bpm,
+#metroVolume {
+    accent-color: var(--green);
+    padding: 0;
+    min-height: 32px;
+    border: 0;
+}
+
+.beat-buttons {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+}
+
+.beat-buttons button {
+    min-width: 42px;
+    border: 1px solid #c4ceba;
+    border-radius: 7px;
+    padding: 8px;
+    background: #f4f7ed;
+    color: var(--green);
+    font-size: 18px;
+}
+
+.beat-buttons small {
+    display: block;
+    font-size: 9px;
+}
+
+.beat-buttons .accent-2 {
+    background: var(--green);
+    color: var(--lime);
+}
+
+.beat-buttons .accent-0 {
+    border-style: dashed;
+    color: #8c9388;
+    background: #fff;
+}
+
+.beat-buttons .playing {
+    outline: 3px solid #96b557;
+    outline-offset: 2px;
+}
+
+.pulse-readout {
+    align-self: center;
+    min-width: 36px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: #547d35;
+    font-weight: 700;
+}
+
+#meterDescription {
+    margin: 18px 0 7px;
+}
+
+.passage-card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 23px;
+    margin: 12px 0;
+    background: white;
+}
+
+.passage-card h3,
+.passage-cue h3 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 27px;
+    margin: 12px 0;
+    overflow-wrap: anywhere;
+}
+
+.passage-card p {
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.passage-card .tag {
+    overflow-wrap: anywhere;
+    max-width: 65%;
+}
+
+.passage-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 35px;
+    padding: 12px 0 20px;
+    font-size: 10px;
+    color: var(--muted);
+}
+
+.passage-metrics strong {
+    display: block;
+    color: var(--green);
+    font-size: 17px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.next-practice {
+    padding: 13px;
+    background: #edf3e4;
+    border-radius: 6px;
+    color: var(--green);
+}
+
+.passage-note {
+    white-space: pre-wrap;
+}
+
+.passage-cue {
+    padding: 19px;
+    border: 1px solid #bfd0aa;
+    background: #f5f8ef;
+    border-radius: 8px;
+    margin-top: 22px;
+}
+
+.inline-check {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12px;
+    margin: 12px 0;
+}
+
+.inline-check input {
+    width: 17px;
+    min-height: 17px;
+    accent-color: var(--green);
+    flex-shrink: 0;
+}
+
+.passage-result {
+    border-bottom: 1px solid var(--line);
+    padding: 8px 0;
+}
+
+.passage-result:last-child {
+    border-bottom: 0;
+}
+
+.result-fieldset {
+    margin-bottom: 16px;
+}
+
+.passage-history-row {
+    border-bottom: 1px solid var(--line);
+    padding: 14px 0;
+}
+
+.passage-history-row strong {
+    display: block;
+    font-size: 16px;
+}
+
+.passage-history-row small {
+    display: block;
+    color: var(--muted);
+    margin: 5px 0;
+}
+
+.passage-history-row p {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    margin: 6px 0;
+}
+
+@media(max-width:1000px) {
+    .metro-layout {
+        grid-template-columns: 1fr
+    }
+
+    .metro-options {
+        grid-template-columns: repeat(3, 1fr)
+    }
+}
+
+@media(max-width:580px) {
+    .metro-options {
+        grid-template-columns: 1fr 1fr
+    }
+
+    .metro-panel summary {
+        display: block;
+        font-size: 25px
+    }
+
+    .metro-panel summary .small-caps {
+        display: block
+    }
+
+    .passage-card {
+        padding: 18px
+    }
+
+    .passage-card .section-top {
+        flex-wrap: wrap
+    }
+
+    .passage-metrics {
+        gap: 18px
+    }
+
+    .metro-tempo label {
+        flex-basis: 100%
+    }
+
+    .passage-card .tag {
+        max-width: 100%
+    }
+}
