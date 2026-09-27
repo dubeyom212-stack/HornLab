@@ -1867,3 +1867,32 @@ legend {
 
 .brand-logo { display: block; width: 172px; height: auto; }
 @media(max-width:800px) { .brand-logo { width: 132px; } }
+.practice-entry {display:flex; flex-wrap:wrap; gap:8px 24px; padding:22px; margin-bottom:24px; background:var(--lime);}
+.practice-entry strong {font-size:20px;}
+.room-grid {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start;}
+.room-work,.room-audio {padding:28px;min-width:0;}
+.room-work label {display:block;margin:16px 0;}
+.room-tempo {display:flex;gap:12px;align-items:baseline;margin:20px 0;}
+.room-tempo strong {font:76px var(--serif);line-height:1;}
+.room-tempo span {color:var(--muted);}
+#roomCue {padding:16px;background:var(--paper);border-left:3px solid var(--green);}
+.room-help {padding:18px 0;border-block:1px solid var(--line);margin-top:24px;}
+.room-help summary {cursor:pointer;font-weight:600;}
+.room-finish {margin-top:24px;}
+#roomElapsed {margin-left:12px;color:var(--muted);}
+.room-attempts {list-style:none;padding:0;margin:20px 0 0;}
+.room-attempts li {display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);}
+.record-controls {display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:24px;}
+#recordStatus {min-height:3em;}
+.audio-import {display:block;border:1px dashed var(--line);padding:14px;border-radius:8px;}
+.audio-import input {display:block;max-width:100%;margin-top:8px;}
+.compare-box {margin:24px 0;padding:18px;background:var(--paper);border-radius:10px;}
+#comparePlayers {display:grid;gap:16px;}
+#comparePlayers p {margin:6px 0;}
+.room-audio audio {display:block;width:100%;max-width:100%;margin:12px 0;}
+.take-card {padding:18px 0;border-top:1px solid var(--line);overflow-wrap:anywhere;}
+.take-card strong,.take-card small {display:block;}
+.take-card small {color:var(--muted);margin-top:6px;}
+.take-card button {font-size:12px;}
+@media(max-width:1100px) {.room-grid {grid-template-columns:1fr;}}
+@media(max-width:580px) {.room-work,.room-audio {padding:20px;} nav {flex-wrap:wrap;} .record-controls .primary {flex:1;} }

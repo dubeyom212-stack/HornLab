@@ -112,7 +112,7 @@ function openDialog(id) {
 }
 
 function changeView() {
-    const view = ['today', 'repertoire', 'progress', 'about'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'today';
+    const view = ['today', 'practice', 'repertoire', 'progress', 'about'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'today';
     $('welcome').hidden = !!state.profile || view === 'about';
     $('workspace').hidden = !state.profile || view === 'about';
     document.querySelectorAll('.view').forEach(el => {
@@ -142,6 +142,7 @@ function loadPractice() {
     renderPractice();
 }
 async function selectProfile(id) {
+    window.dispatchEvent(new Event('hornlab-profile-changing'));
     stopMetronome();
     if (state.practice) pauseTimer();
     state.profile = state.profiles.find(p => p.id === Number(id)) || state.profiles[0] || null;
@@ -174,6 +175,7 @@ async function refresh() {
     renderLibrary();
     renderProgress();
     renderPassages();
+    window.dispatchEvent(new Event('hornlab-refreshed'));
 }
 
 function renderOverview() {
