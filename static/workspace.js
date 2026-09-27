@@ -112,7 +112,9 @@ function openDialog(id) {
 }
 
 function changeView() {
-    const view = ['today', 'repertoire', 'progress'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'today';
+    const view = ['today', 'repertoire', 'progress', 'about'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'today';
+    $('welcome').hidden = !!state.profile || view === 'about';
+    $('workspace').hidden = !state.profile || view === 'about';
     document.querySelectorAll('.view').forEach(el => {
         el.hidden = el.id !== view + 'View';
     });
@@ -143,15 +145,14 @@ async function selectProfile(id) {
     stopMetronome();
     if (state.practice) pauseTimer();
     state.profile = state.profiles.find(p => p.id === Number(id)) || state.profiles[0] || null;
-    $('welcome').hidden = !!state.profile;
-    $('workspace').hidden = !state.profile;
+    changeView();
     $('profileSelect').disabled = !state.profile;
     if (!state.profile) return;
     storage.set('hornlab:profile', String(state.profile.id));
     $('profileSelect').value = state.profile.id;
     $('minutes').value = state.profile.typical_time;
     setMinuteButtons();
-    $('greeting').textContent = `${state.profile.name}, let's make space for a good ${state.profile.instrument.toLowerCase()} session.`;
+    $('greeting').textContent = `Hi ${state.profile.name}. What needs work today?`;
     const url = new URL(location);
     url.searchParams.set('profile', state.profile.id);
     history.replaceState(null, '', url);
@@ -184,7 +185,7 @@ function renderOverview() {
     $('goalCaption').textContent = `${data.week_minutes} of ${data.weekly_goal} min`;
     $('goalProgress').max = data.weekly_goal;
     $('goalProgress').value = data.week_minutes;
-    $('goalMessage').textContent = data.week_minutes >= data.weekly_goal ? 'Your weekly goal is in the books. Take a moment to enjoy it.' : data.week_minutes ? `${data.weekly_goal-data.week_minutes} more minutes to your weekly goal. One focused session at a time.` : 'Your next session is the first step. Make a little room for it.';
+    $('goalMessage').textContent = data.week_minutes >= data.weekly_goal ? 'You reached your weekly goal. Nice work!' : data.week_minutes ? `${data.weekly_goal-data.week_minutes} more minutes to your weekly goal. Keep going when you have time.` : 'Save a session to start this week’s total.';
     const ranked = [...items].sort((a, b) => (a.deadline || '9999').localeCompare(b.deadline || '9999') || ({
         high: 0,
         medium: 1,
@@ -217,7 +218,7 @@ function renderProgress() {
     const chartText = data.series.map(d => `${dayText(d.date)}: ${d.minutes} minutes`).join('; ');
     $('activityChart').setAttribute('aria-label', chartText);
     $('chartAccessible').textContent = chartText;
-    $('sessionHistory').innerHTML = state.sessions.map(s => `<article class="history-item"><time datetime="${escapeHTML(s.date)}">${escapeHTML(dayText(s.date,{month:'short',day:'numeric',year:'numeric'}))}</time><div><h3>${escapeHTML(s.focus)}</h3>${s.notes?`<p>${escapeHTML(s.notes)}</p>`:''}</div><strong>${s.duration} min</strong></article>`).join('') || empty('Every session has a story.', 'Finish a guided session or log practice to start your journal.');
+    $('sessionHistory').innerHTML = state.sessions.map(s => `<article class="history-item"><time datetime="${escapeHTML(s.date)}">${escapeHTML(dayText(s.date,{month:'short',day:'numeric',year:'numeric'}))}</time><div><h3>${escapeHTML(s.focus)}</h3>${s.notes?`<p>${escapeHTML(s.notes)}</p>`:''}</div><strong>${s.duration} min</strong></article>`).join('') || empty('No sessions yet.', 'Finish a guided session or log practice to start your journal.');
 }
 
 function editItem(id) {
@@ -418,7 +419,7 @@ function renderPassages() {
     const showArchived = $('showArchivedPassages').checked;
     const passages = state.passages.filter(p => showArchived || (p.active && p.item_active));
     const card = p => `<article class="passage-card"><div class="section-top"><span class="tag">${escapeHTML(p.item_title)}</span><span class="tag ${p.goal_reached ? '' : 'urgent'}">${!p.active || !p.item_active ? 'Archived' : p.goal_reached ? 'Goal met · review' : 'Building consistency'}</span></div><h3>${escapeHTML(p.label)}</h3><p>Goal: ${p.target_reps} clean repetitions at ${p.target_tempo} BPM · ${escapeHTML(p.tempo_unit)} note</p><div class="passage-metrics"><span>Last result<strong>${p.last_result ? `${p.last_result.tempo} BPM · ${p.last_result.clean_reps} clean reps` : 'No result yet'}</strong></span><span>Best clean tempo<strong>${p.best_clean_tempo ? p.best_clean_tempo + ' BPM' : 'Not reached yet'}</strong></span></div><p class="next-practice">Next: ${escapeHTML(p.next_step)}</p>${p.last_result?.notes ? `<p class="passage-note">${escapeHTML(p.last_result.notes)}</p>` : ''}<div class="button-row"><button class="secondary" data-passage-history="${p.id}">History (${p.result_count})</button><button class="text-button" data-passage-edit="${p.id}">Edit goal</button><button class="text-button" data-passage-archive="${p.id}">${p.active ? 'Archive passage' : 'Restore passage'}</button></div></article>`;
-    $('passageList').innerHTML = passages.map(card).join('') || empty('Give the next session a clear purpose.', 'Add a measure range, starting tempo, and repetition goal.');
+    $('passageList').innerHTML = passages.map(card).join('') || empty('Got a tricky passage?', 'Add a measure range, starting tempo, and repetition goal.');
     $('passageProgress').innerHTML = state.passages.filter(p => p.active && p.item_active).map(card).join('') || empty('Progress beyond the clock.', 'Add a passage goal in Repertoire, then record your results after practice.');
 }
 
@@ -633,7 +634,7 @@ document.addEventListener('click', guard(async event => {
 $('profileSelect').addEventListener('change', guard(event => selectProfile(event.target.value)));
 $('newProfile').addEventListener('click', () => openDialog('profileDialog'));
 $('welcomeCreate').addEventListener('click', () => openDialog('profileDialog'));
-$('aboutButton').addEventListener('click', () => openDialog('aboutDialog'));
+
 $('addItem').addEventListener('click', () => editItem());
 $('editGoal').addEventListener('click', () => {
     $('goalForm').elements.weekly_minutes.value = state.insights.weekly_goal;
@@ -761,6 +762,6 @@ async function init() {
     const selected = new URLSearchParams(location.search).get('profile') || storage.get('hornlab:profile');
     await selectProfile(selected);
     if (location.pathname === '/setup' && state.profile) openDialog('profileDialog');
-    if (location.pathname === '/about') openDialog('aboutDialog');
+    if (location.pathname === '/about' && !location.hash) location.hash = 'about';
 }
 guard(init)();
