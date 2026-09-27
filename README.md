@@ -1,10 +1,35 @@
 # HornLab
 
-A focused local practice workspace for musicians, built with Flask and SQLite.
+![HornLab](static/hornlab-logo.svg)
 
-## Run
+I'm Om Dubey. I started HornLab because practice was one more thing to figure out between AP classes, music, and everything else. I wanted a clearer answer to “what should I work on today?”
 
-Requires Python 3.10 or newer.
+I'm not in band anymore, but I still care about this problem. This is a student project, and it is still changing as I try it and get feedback.
+
+## What changed after trying it
+
+The first version leaned too much on a timer and a practice log. After using it and getting feedback, it was clear that logging minutes wasn't enough. The newer Practice screen focuses on working through a passage and listening back to actual takes.
+
+## Try a practice session
+
+1. In **Repertoire**, add a piece and a passage goal—something like measures 24–32, starting at 60 BPM, with a target of 80.
+2. Open **Practice**, pick that passage, and choose what you're listening for.
+3. Play it once. Tap **Clean** or **Again**. A clean streak unlocks a 4 BPM increase; you can also slow down.
+4. Record a short take, listen back, and record another. Use **A** and **B** to compare them. You can import audio files too.
+5. Hit **Finish & save**. The attempts become a session note automatically. Adding your own note is optional.
+
+The app doesn't decide whether your playing is clean. You do. The tempo ladder is a simple rule, and the “I'm stuck” exercises are written suggestions—not an AI teacher.
+
+## Other things in the app
+
+- A metronome with different meters, subdivisions, accents, tap tempo, and volume.
+- Pieces, passage goals, deadlines, and practice history.
+- A timed routine if you prefer one, plus weekly totals and CSV export.
+- An About page with the reason behind the project and a few photos.
+
+## Run it
+
+You need Python 3.10 or newer. Open a terminal in the folder containing `app.py` and run:
 
 ```powershell
 python -m venv .venv
@@ -12,54 +37,35 @@ python -m venv .venv
 .\.venv\Scripts\python.exe app.py
 ```
 
-On macOS or Linux, use `.venv/bin/python` instead of `.\.venv\Scripts\python.exe`.
-Open http://127.0.0.1:5000. Create a profile, add repertoire, and build a session.
+Open http://127.0.0.1:5000. On macOS or Linux, use `.venv/bin/python` for the last two commands.
 
-## Workspace
+[RUN.md](RUN.md) has more detailed instructions and help with common setup errors. [WEB.md](WEB.md) covers PythonAnywhere's free hosting and updating an existing site.
 
-- **Today:** choose 5–180 minutes and a balanced, deadline-first, or weakest-area approach. Plans include a warm-up and conserve the exact requested time.
-- **Guided sessions:** pause/resume each step, mark it complete, or finish early. Timer state survives refresh in this browser, separately for each profile. Review actual minutes and practiced items before saving; unfinished steps are not automatically marked practiced.
-- **Metronome:** 30–240 BPM with tap tempo, custom 1–12-beat bars, half/quarter/eighth/sixteenth note values, 1–4 clicks per counted beat, per-beat strong/normal/silent accents, and volume. Compound 6/8, 9/8, and 12/8 can count dotted-quarter groups or individual eighth notes. BPM always names the counted note value. Settings persist per profile in this browser. Clicks are scheduled against the Web Audio clock and stop when the tab is hidden. Changing settings restarts at beat 1.
-- **Repertoire:** create, search, filter, edit, archive, and restore pieces and technical goals. Set confidence, priority, and deadlines.
-- **Progress:** Monday-based weekly goals, a 14-day chart, total practice, current streak, and the latest 100 journal entries. A streak includes yesterday when today has not yet been practiced. All dates follow the server computer.
-- **Journal:** log guided or manual sessions, track completed repertoire, and export the full history as CSV. Duplicate retries of the same guided save are deduplicated with a session token.
+## Where things are saved
 
-## Passage goals and feedback
+Pieces and finished sessions are stored in SQLite, normally `instance/hornlab.db`. Back that file up before updating. Starting the app creates missing tables without replacing existing practice data.
 
-In **Repertoire → Passage goals**, attach a measure range or specific goal to a piece. Set a starting tempo, target tempo, clean-repetition goal, and tempo unit. At the end of a guided session (or in a manual log), optionally record the actual tempo, clean repetitions, and a short passage note.
+Unfinished passage practice is saved in the browser. After a refresh it comes back paused. Use one tab per profile. Active time pauses when you leave Practice or hide the tab; saved minutes are rounded with a one-minute minimum.
 
-New plans give unfinished passage goals an additional ranking weight and select one passage per chosen repertoire item. Within a piece, unfinished goals come first, then the oldest practice date. No result starts at the baseline; fewer than the target clean repetitions suggests staying at the last tempo; meeting the repetition goal suggests +4 BPM up to the target. A goal met at target tempo becomes a review suggestion. These are transparent practice heuristics, not automatic audio assessment; results are self-reported.
+Recordings stay in that browser's storage, grouped by profile. They are **not uploaded**, synced between devices, or included in the session CSV. Download takes you want to keep: clearing browser data can remove them. A public website and localhost have separate browser storage.
 
-**Progress → Passage progress** shows the last result, best tempo meeting the current repetition goal, and the next suggested step. History preserves the latest 20 results with the tempo unit and goals recorded at that time. All results remain in the database. Changing the tempo unit separates comparisons; it does not relabel older results. Session CSV export remains a summary of dates, minutes, focus, and session notes; passage-level results are viewed in passage history.
+Recording needs a microphone, browser permission, and HTTPS (localhost works for development). Takes stop after three minutes or when the tab is hidden. Imported files can be up to 15 MB; the local audio collection is capped at 50 MB. If storing a take fails, the page offers a temporary download. Download it before closing the tab. Tempo labels record the practice setting, not a tempo detected from the audio.
 
-Passage archive/restore preserves history. Archiving a repertoire item excludes its passages from new plans. Existing in-progress plans keep their original goals; generate a new plan after editing a goal.
+## Current limits
 
-## Existing data
+Profiles are shared, **not private accounts**. Anyone using the same hosted app can view and change its saved practice data. Use demo data if you share it publicly. Private accounts are still needed before treating it as a personal service for multiple musicians.
 
-The original `Profile`, `PracticeItem`, and `PracticeSession` table layouts are unchanged. On startup HornLab adds the `practice_goal`, `session_receipt`, `passage`, and `passage_result` tables if absent. Back up `instance/hornlab.db` while the app is stopped before upgrading. The old `hornlab_old.db` is not used or modified.
+The app doesn't listen for wrong notes, grade tone, or generate AI feedback. Microphone recording still needs hands-on testing across real phones and microphones; automated recorder tests use simulated devices. Imported audio and the practice flow have been checked in the browser.
 
-By default the database remains `instance/hornlab.db`. Set `HORNLAB_DATABASE_URI` to use a different database, for example `sqlite:///demo.db` for a separate demo. `PORT` overrides port 5000. Do not commit personal database files.
+## Development
 
-## Tests
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -v
-```
-
-The tests use isolated, in-memory databases. They cover all supported plan lengths with 1–5 repertoire items in each mode, ranking, profile-scoped edits, archive/restore, validation, duplicate session retries, CSV output, calendar totals, and old schema compatibility.
-
-Browser verification covers profile creation, repertoire editing, archive/restore, search, generating a session, timer recovery after reload, metronome controls, saving a journal entry, weekly goals, and desktop/mobile layouts.
-
-The seven metronome scheduling tests need Node.js 18 or newer (Node is not needed to run HornLab):
+The backend is Flask with Flask-SQLAlchemy. The interface uses plain JavaScript, HTML, and CSS. Browser recording uses MediaRecorder, and stored audio uses IndexedDB.
 
 ```sh
-node --test test_metronome.cjs
+python -m unittest discover -v
+node --test test_metronome.cjs test_practice.cjs
 ```
 
-The tracking tests cover repeat/advance/review suggestions, history snapshots, tempo-unit changes, validation, profile separation, archived passages, additive database tables, and retry deduplication. Audio tests cover meter lengths, compound subdivision timing, muted beats, cancellation, and stalled-tab recovery.
+Python tests cover planning, saved data, and passage results. JavaScript tests cover metronome scheduling, tempo progression, and recording lifecycle behavior. Node is only needed for those tests, not for running the app.
 
-## Operating scope
-
-This is a personal/local app, bound to `127.0.0.1` by default with debug mode disabled. Profiles are organizational conveniences, not authenticated accounts; anyone with access to this app can select another profile. Do not expose it publicly without adding authentication, authorization, CSRF protection, a production server, and a deployment-specific review.
-
-Session timer state is stored in browser local storage, so private browsing or clearing storage removes that unsaved state. Recorded sessions and repertoire remain in SQLite. Use one active tab per profile for a guided session. The UI uses optional Google Fonts with system fallbacks and has no JavaScript CDN dependencies.
+The project has been developed with AI coding assistance. The practice problem and product direction come from my own experience and feedback; changes still need testing with actual players.
