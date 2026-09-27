@@ -484,9 +484,35 @@ function handleForm(id, submit) {
         }
     });
 }
+function instrumentValue(form) {
+    return form.elements.instrument.value === 'other' ? form.elements.custom_instrument.value.trim() : form.elements.instrument.value;
+}
+document.querySelectorAll('[data-instrument-picker]').forEach(select => {
+    select.onchange = () => {
+        const custom = select.form.querySelector('[data-custom-instrument]');
+        const other = select.value === 'other';
+        custom.hidden = !other; custom.querySelector('input').disabled = !other; custom.querySelector('input').required = other;
+    };
+    select.form.addEventListener('reset', () => {select.form.querySelector('[data-custom-instrument]').hidden = true; select.form.elements.custom_instrument.disabled = true; select.form.elements.custom_instrument.required = false;});
+});
+$('editInstrument').onclick = () => {
+    if (!state.profile) return notify('Create a profile first.');
+    if (storage.get(`hornlab:room:${state.profile.id}`) || state.practice) return notify('Finish or discard your current practice draft before changing instruments.');
+    const form = $('instrumentForm'), select = form.elements.instrument;
+    const name = state.profile.guidance?.name || state.profile.instrument;
+    select.value = [...select.options].some(o => o.value === name) ? name : 'other';
+    form.elements.custom_instrument.value = state.profile.instrument;
+    select.onchange(); openDialog('instrumentDialog');
+};
+handleForm('instrumentForm', async form => {
+    await api(`/api/profiles/${state.profile.id}/instrument`, 'PATCH', {instrument:instrumentValue(form)});
+    localStorage.removeItem(`hornlab:coach:${state.profile.id}`);
+    location.reload();
+});
 handleForm('profileForm', async form => {
     const data = Object.fromEntries(new FormData(form));
     data.typical_time = Number(data.typical_time);
+    data.instrument = instrumentValue(form); delete data.custom_instrument;
     const result = await api('/api/profiles', 'POST', data);
     state.profiles.push(result.profile);
     renderProfiles();

@@ -1878,6 +1878,9 @@ legend {
 #roomCue {padding:16px;background:var(--paper);border-left:3px solid var(--green);}
 .room-help {padding:18px 0;border-block:1px solid var(--line);margin-top:24px;}
 .room-help summary {cursor:pointer;font-weight:600;}
+.room-reset {background:var(--paper);border-left:3px solid var(--green);padding:20px;margin-top:16px;}
+.room-reset h3 {margin:12px 0;}
+#roomResetClock {font-weight:600;font-variant-numeric:tabular-nums;}
 .room-finish {margin-top:24px;}
 #roomElapsed {margin-left:12px;color:var(--muted);}
 .room-attempts {list-style:none;padding:0;margin:20px 0 0;}

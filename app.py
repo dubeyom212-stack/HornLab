@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from uuid import UUID
 
 import coach
+from instruments import INSTRUMENTS, instrument_guidance
 from flask import Blueprint, Flask, Response, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
@@ -525,7 +526,7 @@ def action_for(item):
     return {
         "focus": "Keep the fundamentals moving",
         "instruction": (
-            "Play enough to get the sound and air feeling right. "
+            "Use a familiar easy exercise to get comfortable. "
             "You don't need to turn this into a 20-minute warmup."
         ),
         "success": "Feels ready",
@@ -578,7 +579,7 @@ def build_plan(profile, minutes, mode="balanced"):
             title="Warm up",
             duration=warmup,
             focus="Find your sound",
-            instruction="Easy long tones, relaxed breathing, then gentle lip slurs.",
+            instruction=instrument_guidance(profile.instrument)["warmup"],
             success="A comfortable, centered sound",
             type="warmup",
             priority=False,
@@ -623,7 +624,7 @@ def build_plan(profile, minutes, mode="balanced"):
 @bp.get("/setup")
 @bp.get("/about")
 def index():
-    return render_template("workspace.html")
+    return render_template("workspace.html", instruments=INSTRUMENTS)
 
 
 @bp.get("/api/profiles")
@@ -634,6 +635,7 @@ def profiles():
                 id=p.id,
                 name=p.name,
                 instrument=p.instrument,
+                guidance=instrument_guidance(p.instrument),
                 typical_time=p.typical_time,
             )
             for p in Profile.query.order_by(Profile.name).all()
@@ -657,9 +659,18 @@ def create_profile():
             id=profile.id,
             name=profile.name,
             instrument=profile.instrument,
+            guidance=instrument_guidance(profile.instrument),
             typical_time=profile.typical_time,
         ),
     ), 201
+
+
+@bp.patch("/api/profiles/<int:profile_id>/instrument")
+def change_instrument(profile_id):
+    profile = get_profile(profile_id)
+    profile.instrument = text_value(body().get("instrument"), "Instrument", 100)
+    db.session.commit()
+    return jsonify(success=True)
 
 
 @bp.get("/api/items")
@@ -827,6 +838,7 @@ def coach_plan():
     context = dict(
         today=today,
         instrument=profile.instrument,
+        instrument_guidance=instrument_guidance(profile.instrument),
         minutes=minutes,
         energy=energy,
         other_commitments=workload,

@@ -20,6 +20,7 @@ class CoachTransportTests(unittest.TestCase):
         self.assertEqual(request.get_header("User-agent"), "HornLab/1.0")
         self.assertEqual(request.get_method(), "POST")
         self.assertEqual(json.loads(request.data)["response_format"], {"type": "json_object"})
+        self.assertIn("Never assume the player plays horn", json.loads(request.data)["messages"][0]["content"])
 
     def test_provider_errors_show_status_without_private_response(self):
         for status in (400, 401, 403, 404, 413, 422, 429, 500, 503):
@@ -95,6 +96,7 @@ class CoachTests(unittest.TestCase):
         self.assertNotIn("secret", str(result.json))
         self.assertEqual([x["id"] for x in context["passages"]], [p["id"]])
         self.assertEqual(context["other_commitments"], "AP Calc in 2 days")
+        self.assertEqual(context["instrument_guidance"]["family"], "brass")
         with patch("coach.api_key", return_value="secret"), patch("coach.ask") as ask:
             retry = self.client.post("/api/coach", json=self.brief())
             self.assertEqual(retry.status_code, 429)

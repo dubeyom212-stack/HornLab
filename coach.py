@@ -22,7 +22,12 @@ def api_key():
 
 
 def ask(context, key):
-    system = """You help a busy horn player choose a small amount of useful practice.
+    system = """You help a busy musician choose a small amount of useful practice.
+Use the supplied instrument and instrument_guidance. Never assume the player plays horn.
+Keep techniques compatible with that instrument: no brass lip-slur or valve drills for
+woodwinds, strings, keyboard, percussion, or voice. No bow exercises for wind players.
+For an unknown instrument use timing, small sections, and listening, without guessing technique.
+Only use instrument-specific details when the player's instrument and passage support them.
 Return ONLY a JSON object with summary (under 400 chars), skip_today (under 400 chars),
 warmup_minutes (integer 1-3), and blocks (1-3 objects). Each block has passage_id,
 weight (integer 1-5), task (under 400 chars), why (under 240 chars),

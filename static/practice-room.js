@@ -17,6 +17,9 @@
         const now = Date.now();
         if (run && !run.paused && !document.hidden && location.hash === '#practice') {
             run.seconds += Math.min(2, (now - lastTick) / 1000);
+            if (run.reset?.stage === 'working' && run.seconds >= run.reset.start + run.reset.duration) {
+                run.reset.stage = 'review'; run.paused = true; stopMetronome(); recorder.stop(); draw();
+            }
             if(run.coach && !run.coach.budgetReached && run.seconds >= run.coach.minutes*60) {
                 run.paused=true;stopMetronome();recorder.stop();draw();
                 notify('That task has reached its time budget. Save what you tried and move on, or resume if you choose.');
@@ -26,26 +29,45 @@
         }
         lastTick = now;
         if (run) $('roomElapsed').textContent = `${time(run.seconds)} active`;
+        if (run?.reset) $('roomResetClock').textContent = run.reset.stage === 'review' ? 'Time to check in.' : `${time(Math.max(0, run.reset.duration - (run.seconds - run.reset.start)))} left${run.paused ? ' · paused' : ''}`;
         $('recordClock').textContent = time(recordingAt ? (now - recordingAt) / 1000 : 0);
         $('roomClick').textContent = metroWanted ? 'Stop click' : 'Play click';
     }
     function draw() {
         $('roomSetup').hidden = !!run;
         $('roomActive').hidden = !run;
-        if (!run) return;
+        if (!run) {
+            $('roomResetSetup').hidden = true; $('roomStuck').setAttribute('aria-expanded', 'false');
+            $('roomResetStatus').textContent = ''; return;
+        }
+        const resetting = !!run.reset;
         $('roomTitle').textContent = `${run.passage.item_title} · ${run.passage.label}`;
+        $('roomProblem').options[1].textContent = HornPractice.drillFor('notes', run.guidance).label;
         $('roomTask').textContent = run.coach ? `${run.goal} Move on when: ${run.coach.stop_when} Time budget: ${run.coach.minutes} minutes.` : `Listen for: ${run.goal.toLowerCase()}. Play the passage once, then mark your attempt.`;
         $('roomTempo').textContent = run.tempo;
         $('roomUnit').textContent = `BPM · ${run.passage.tempo_unit} note`;
         $('roomCue').textContent = run.ready ? (run.tempo >= run.passage.target_tempo ? 'Target reached. Record a final take and compare it with your first.' : 'Clean run complete. Move up when you feel ready.') : `${run.streak} / ${run.passage.target_reps} consecutive clean attempts at this tempo.`;
-        $('roomUp').disabled = !run.ready || run.tempo >= run.passage.target_tempo || saving;
-        $('roomDown').disabled = run.tempo <= 30 || saving;
-        $('roomUndo').disabled = !run.attempts.length || saving;
-        $('roomClean').disabled = run.paused || saving;
-        $('roomAgain').disabled = run.paused || saving;
+        $('roomUp').disabled = resetting || !run.ready || run.tempo >= run.passage.target_tempo || saving;
+        $('roomDown').disabled = resetting || run.tempo <= 30 || saving;
+        $('roomUndo').disabled = resetting || run.attempts.length <= (run.attemptFloor || 0) || saving;
+        $('roomClean').disabled = resetting || run.paused || saving;
+        $('roomAgain').disabled = resetting || run.paused || saving;
         $('roomPause').textContent = run.paused ? 'Resume practice' : 'Pause practice';
-        $('roomFinish').disabled = saving || !run.attempts.length;
+        $('roomPause').disabled = saving || run.reset?.stage === 'review';
+        $('roomFinish').disabled = resetting || saving || (!run.attempts.length && !run.resets?.length);
         $('roomFinish').textContent = saving ? 'Saving…' : 'Finish & save';
+        $('roomStuck').hidden = resetting;
+        $('roomStuck').disabled = saving;
+        $('roomReset').hidden = !resetting;
+        if (resetting) {
+            $('roomResetSetup').hidden = true;
+            $('roomStuck').setAttribute('aria-expanded', 'false');
+            $('roomResetTitle').textContent = `${run.reset.label} · ${run.tempo} BPM`;
+            $('roomResetTask').textContent = run.reset.task;
+            $('roomResetDone').hidden = run.reset.stage === 'review';
+            $('roomResetFeedback').hidden = run.reset.stage !== 'review';
+            $('roomCue').textContent = 'Work on the small group below. Check in before trying the whole passage again.';
+        }
         $('roomAttempts').innerHTML = run.attempts.slice(-8).reverse().map(a => `<li>${a.clean ? '✓ Clean' : '↻ Again'} <span>${a.tempo} BPM</span></li>`).join('');
     }
     async function setClick() {
@@ -60,6 +82,7 @@
         if (!id) return;
         if (owner !== id) {
             owner = id; run = null; compare = {};
+            $('roomResetStatus').textContent = ''; $('roomResetSetup').hidden = true;
             try {
                 const saved = JSON.parse(localStorage.getItem(key()));
                 if (saved?.version === 1 && saved.profile_id === id && Array.isArray(saved.attempts) && saved.passage && Number.isFinite(saved.seconds)) run = {...saved,paused:true};
@@ -74,19 +97,43 @@
         $('roomStart').disabled = !passages.length;
         draw(); await loadTakes();
     }
-    const exercises = {
-        rhythm: 'Put the horn down for one run. Clap and count the passage with subdivisions, then play it at a slower tempo. Listen for the spaces between notes.',
-        notes: 'Work on just the first two troublesome notes. Play them slowly, add the next note, then put the short group back into the phrase.',
-        attacks: 'Isolate the entrance. Hear the starting pitch, breathe with the pulse, and try one comfortable attack at a time before adding the next note.',
-        sound: 'Take a short break. Return at a comfortable volume and range. Stop if playing hurts; ask your teacher about persistent strain.'
-    };
-    $('roomProblem').onchange = () => { $('roomExercise').textContent = exercises[$('roomProblem').value]; };
+    $('roomProblem').onchange = () => { $('roomExercise').textContent = HornPractice.drillFor($('roomProblem').value, run?.guidance || state.profile?.guidance).task; };
     $('roomProblem').onchange();
+    $('roomStuck').onclick = () => {
+        if (!run || saving || run.reset) return;
+        $('roomResetSetup').hidden = !$('roomResetSetup').hidden;
+        $('roomStuck').setAttribute('aria-expanded', String(!$('roomResetSetup').hidden));
+        $('roomProblem').onchange();
+    };
+    $('roomResetStart').onclick = guard(async () => {
+        if (!run || saving || run.reset) return;
+        if (busy) return message('Stop your take before starting a reset.');
+        tick();
+        const next = HornPractice.beginReset(run, $('roomProblem').value);
+        if (next === run) { $('roomResetStatus').textContent = 'Less than 20 seconds left in this task. Save it and move on instead of squeezing in another exercise.'; return; }
+        run = next; lastTick = Date.now(); $('roomResetStatus').textContent = '';
+        persistRun(); draw(); tick(); await setClick();
+    });
+    $('roomResetDone').onclick = () => {
+        if (!run?.reset || saving) return;
+        tick(); run.reset.stage = 'review'; run.paused = true; stopMetronome(); recorder.stop(); persistRun(); draw(); tick();
+    };
+    for (const [id, helped] of [['roomResetBetter', true], ['roomResetLater', false]]) $(id).onclick = () => {
+        if (!run?.reset || saving) return;
+        if (busy) return message('Wait for the recording to finish before checking in.');
+        run = HornPractice.finishReset(run, helped);
+        const outOfTime = run.coach && run.seconds >= run.coach.minutes * 60;
+        run.paused = !helped || !!outOfTime;
+        lastTick = Date.now(); persistRun(); draw();
+        $('roomResetStatus').textContent = helped && !outOfTime
+            ? `Try the whole passage once at ${run.tempo} BPM. Mark that attempt below; the drill itself hasn't raised your score.`
+            : 'Leave this spot here for today. Finish & save will keep the reset in your notes for next time.';
+    };
     $('roomStart').onclick = guard(async () => {
         const passage = state.passages.find(p=>p.id===Number($('roomPassage').value));
         if (!passage || run || busy) return;
         if (state.practice?.started) pauseTimer();
-        run = {version:1,profile_id:owner,token:crypto.randomUUID(),passage:{...passage},goal:$('roomGoal').value,tempo:passage.suggested_tempo,streak:0,ready:false,attempts:[],seconds:0,paused:false,note:''};
+        run = {version:1,guidance:state.profile.guidance,profile_id:owner,token:crypto.randomUUID(),passage:{...passage},goal:$('roomGoal').value,tempo:passage.suggested_tempo,streak:0,ready:false,attempts:[],seconds:0,paused:false,note:''};
         lastTick=Date.now(); persistRun(); await setClick(); draw(); await loadTakes();
     });
     window.addEventListener('hornlab-coach-start',guard(async event=>{
@@ -95,7 +142,7 @@
         if(!passage)return notify('This passage is no longer active. Make a new plan.');
         if(block.tempo_unit!==passage.tempo_unit)return notify('The passage tempo unit changed. Make a new plan before starting it.');
         if(state.practice?.started)pauseTimer();
-        run={version:1,profile_id:owner,token:crypto.randomUUID(),passage:{...passage},goal:block.task,tempo:Math.max(30,Math.min(passage.target_tempo,block.start_tempo)),streak:0,ready:false,attempts:[],seconds:0,paused:false,note:'',coach:{...block}};
+        run={version:1,guidance:state.profile.guidance,profile_id:owner,token:crypto.randomUUID(),passage:{...passage},goal:block.task,tempo:Math.max(30,Math.min(passage.target_tempo,block.start_tempo)),streak:0,ready:false,attempts:[],seconds:0,paused:false,note:'',coach:{...block}};
         lastTick=Date.now();persistRun();await setClick();draw();await loadTakes();$('roomActive').scrollIntoView({behavior:'smooth',block:'start'});
     }));
     for (const [id, clean] of [['roomClean',true],['roomAgain',false]]) $(id).onclick = () => {
@@ -104,9 +151,9 @@
         run = HornPractice.attempt(run,clean); persistRun(); draw();
     };
     $('roomUndo').onclick = () => {
-        if (!run?.attempts.length || saving) return;
+        if (!run?.attempts.length || run.reset || run.attempts.length <= (run.attemptFloor || 0) || saving) return;
         run.attempts.pop();
-        const last = run.attempts.at(-1);
+        const last = run.attempts.length > (run.attemptFloor || 0) ? run.attempts.at(-1) : null;
         run.streak = last?.tempo === run.tempo ? last.streak : 0;
         run.ready = run.streak >= run.passage.target_reps;
         persistRun(); draw();
@@ -128,13 +175,13 @@
         run=null;persistRun();stopMetronome();$('roomDiscard').textContent='Discard this practice draft';draw();
     };
     $('roomFinish').onclick = guard(async () => {
-        if (!run?.attempts.length || saving) return;
+        if (!run || run.reset || (!run.attempts.length && !run.resets?.length) || saving) return;
         if (busy) { message('Stop your recording before finishing the session.'); return; }
         tick(); run.paused=true; persistRun(); stopMetronome(); saving=true; draw();
         const draft=run;
         try {
             const result=HornPractice.result(draft);
-            await api('/api/session','POST',{profile_id:draft.profile_id,token:draft.token,duration:Math.max(1,Math.min(720,Math.round(draft.seconds/60))),focus:`${draft.passage.item_title} · ${draft.passage.label}`.slice(0,200),notes:`Passage practice: ${draft.goal}. Active time ${time(draft.seconds)} (minutes rounded, minimum 1).\n${draft.attempts.map(a=>`${a.tempo}: ${a.clean?'clean':'again'}`).join('; ')}\n${draft.note}`,completed_item_ids:[draft.passage.item_id],passage_results:[result]});
+            await api('/api/session','POST',{profile_id:draft.profile_id,token:draft.token,duration:Math.max(1,Math.min(720,Math.round(draft.seconds/60))),focus:`${draft.passage.item_title} · ${draft.passage.label}`.slice(0,200),notes:`${HornPractice.resetSummary(draft)}Passage practice: ${draft.goal}. Active time ${time(draft.seconds)} (minutes rounded, minimum 1).\n${draft.attempts.map(a=>`${a.tempo}: ${a.clean?'clean':'again'}`).join('; ')}\n${draft.note}`,completed_item_ids:result?[draft.passage.item_id]:[],passage_results:result?[result]:[]});
             localStorage.removeItem(`hornlab:room:${draft.profile_id}`);
             if(run===draft) {run=null;$('roomNote').value='';}
             await refresh(); notify('Practice saved. Your takes are still here to listen to.');
@@ -195,6 +242,7 @@
     function recordingUI(active) {
         busy=active;$('recordTake').disabled=active;$('stopTake').disabled=!active;$('importTake').disabled=active;
         $('profileSelect').disabled=active;$('newProfile').disabled=active;
+        $('editInstrument').disabled=active;
         $('recordTake').textContent=active?'● Recording…':'● Record a take';
     }
     $('recordTake').onclick=async()=>{

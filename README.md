@@ -24,9 +24,15 @@ You need to connect your own Groq key first: [AI_SETUP.md](AI_SETUP.md). Until t
 4. Record a short take, listen back, and record another. Use **A** and **B** to compare them. You can import audio files too.
 5. Hit **Finish & save**. The attempts become a session note automatically. Adding your own note is optional.
 
-The app doesn't decide whether your playing is clean. You do. The tempo ladder is a simple rule, and the “I'm stuck” exercises are written suggestions—not an AI teacher.
+When repeating the same mistake isn't helping, tap **Still stuck? Try a reset**. Choose rhythm, notes, or entrances. HornLab slows the click and gives you a small exercise for up to 90 seconds, within the AI task's remaining time. Check in afterward: retry the full passage at the slower tempo, or save and leave that spot for next time. The reset and your feedback go into the session notes. Short drill work doesn't count as a clean full-passage attempt.
+
+The app doesn't decide whether your playing is clean. You do. These reset exercises are built-in suggestions, so they work without an AI connection. The AI coach can use the saved reset feedback in a later plan when you also logged a full-passage attempt; drill-only sessions stay in the session history.
 
 ## Other things in the app
+
+Profiles now have an instrument picker, including the saxophone types, brass, woodwinds, strings, piano, percussion, and voice. **Other instrument** keeps custom names. Existing names such as “tenor sax” are recognized too. Use **Change instrument** after finishing your current draft to update an existing profile.
+
+Warm-ups, entrance drills, and the AI brief use a shared instrument guide. For example, saxophone gets fingering and air cues; piano gets hand coordination; percussion gets stroke patterns. Unknown instruments get neutral practice prompts rather than guessed technique. Related instruments share suitable exercises—this isn't a separate expert curriculum for each one.
 
 - A metronome with different meters, subdivisions, accents, tap tempo, and volume.
 - Pieces, passage goals, deadlines, and practice history.

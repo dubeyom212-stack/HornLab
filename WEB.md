@@ -118,3 +118,15 @@ unzip -o HornLab-advanced.zip -d HornLab
 This ZIP contains source files, not a database. The command replaces matching source files and keeps your `instance` database. In the Web tab click **Reload**, then refresh the website. You should see **Practice** in the navigation. There are no new Python dependencies for this update.
 
 Use your **https://** website address for microphone access. Click **Record a take**, allow the microphone, play a short passage, and click **Stop**. Try playback before relying on the recording. Audio stays in that browser; recordings made on localhost do not transfer to the public site. Download them from the original browser if you want to import them on the public site.
+# Install the practice reset and instrument update
+
+In your PythonAnywhere Bash console, open the folder containing `app.py`. For the current HornLab account:
+
+```bash
+cd /home/HornLab/HornLab
+curl -fL https://raw.githubusercontent.com/dubeyom212-stack/HornLab/codex/advanced-practice-workspace/update_practice.py -o /tmp/hornlab-update.py
+python /tmp/hornlab-update.py
+```
+
+Then click **Web → Reload**. The updater downloads the eight required source files before replacing any, and saves the previous versions under `~/.config/hornlab/backups/`. It does not change the database or Groq key. If downloading fails, stop and read the error before reloading. The new scripts have versioned URLs so the browser requests the updated practice controls.
+
