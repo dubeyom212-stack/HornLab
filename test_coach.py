@@ -1,8 +1,38 @@
+import io
+import json
 import unittest
+from urllib.error import HTTPError
 from unittest.mock import patch
 
 import coach
 import test_tracking
+
+
+class CoachTransportTests(unittest.TestCase):
+    def test_request_identifies_app_and_reads_plan(self):
+        answer = {"summary": "Focus on the entrance."}
+        response = io.BytesIO(json.dumps({"choices": [{"message": {
+            "content": json.dumps(answer)
+        }}]}).encode())
+        with patch("coach.urlopen", return_value=response) as send:
+            self.assertEqual(coach.ask({"minutes": 15}, "test-key"), answer)
+        request = send.call_args.args[0]
+        self.assertEqual(request.get_header("User-agent"), "HornLab/1.0")
+        self.assertEqual(request.get_method(), "POST")
+        self.assertEqual(json.loads(request.data)["response_format"], {"type": "json_object"})
+
+    def test_provider_errors_show_status_without_private_response(self):
+        for status in (400, 401, 403, 404, 413, 422, 429, 500, 503):
+            with self.subTest(status=status):
+                error = HTTPError("https://api.groq.com", status, "secret-key", {},
+                                  io.BytesIO(b"private practice notes and secret-key"))
+                with patch("coach.urlopen", side_effect=error):
+                    with self.assertRaises(coach.CoachUnavailable) as raised:
+                        coach.ask({}, "secret-key")
+                message = str(raised.exception)
+                self.assertIn(f"HTTP {status}", message)
+                self.assertNotIn("secret-key", message)
+                self.assertNotIn("private practice", message)
 
 
 class CoachTests(unittest.TestCase):
