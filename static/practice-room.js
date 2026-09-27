@@ -17,6 +17,11 @@
         const now = Date.now();
         if (run && !run.paused && !document.hidden && location.hash === '#practice') {
             run.seconds += Math.min(2, (now - lastTick) / 1000);
+            if(run.coach && !run.coach.budgetReached && run.seconds >= run.coach.minutes*60) {
+                run.paused=true;stopMetronome();recorder.stop();draw();
+                notify('That task has reached its time budget. Save what you tried and move on, or resume if you choose.');
+                run.coach.budgetReached=true;
+            }
             persistRun();
         }
         lastTick = now;
@@ -29,7 +34,7 @@
         $('roomActive').hidden = !run;
         if (!run) return;
         $('roomTitle').textContent = `${run.passage.item_title} · ${run.passage.label}`;
-        $('roomTask').textContent = `Listen for: ${run.goal.toLowerCase()}. Play the passage once, then mark your attempt.`;
+        $('roomTask').textContent = run.coach ? `${run.goal} Move on when: ${run.coach.stop_when} Time budget: ${run.coach.minutes} minutes.` : `Listen for: ${run.goal.toLowerCase()}. Play the passage once, then mark your attempt.`;
         $('roomTempo').textContent = run.tempo;
         $('roomUnit').textContent = `BPM · ${run.passage.tempo_unit} note`;
         $('roomCue').textContent = run.ready ? (run.tempo >= run.passage.target_tempo ? 'Target reached. Record a final take and compare it with your first.' : 'Clean run complete. Move up when you feel ready.') : `${run.streak} / ${run.passage.target_reps} consecutive clean attempts at this tempo.`;
@@ -84,6 +89,15 @@
         run = {version:1,profile_id:owner,token:crypto.randomUUID(),passage:{...passage},goal:$('roomGoal').value,tempo:passage.suggested_tempo,streak:0,ready:false,attempts:[],seconds:0,paused:false,note:''};
         lastTick=Date.now(); persistRun(); await setClick(); draw(); await loadTakes();
     });
+    window.addEventListener('hornlab-coach-start',guard(async event=>{
+        if(run || busy) return notify('Finish or discard your current practice draft before starting this task.');
+        const block=event.detail, passage=state.passages.find(p=>p.id===block.passage_id && p.active && p.item_active);
+        if(!passage)return notify('This passage is no longer active. Make a new plan.');
+        if(block.tempo_unit!==passage.tempo_unit)return notify('The passage tempo unit changed. Make a new plan before starting it.');
+        if(state.practice?.started)pauseTimer();
+        run={version:1,profile_id:owner,token:crypto.randomUUID(),passage:{...passage},goal:block.task,tempo:Math.max(30,Math.min(passage.target_tempo,block.start_tempo)),streak:0,ready:false,attempts:[],seconds:0,paused:false,note:'',coach:{...block}};
+        lastTick=Date.now();persistRun();await setClick();draw();await loadTakes();$('roomActive').scrollIntoView({behavior:'smooth',block:'start'});
+    }));
     for (const [id, clean] of [['roomClean',true],['roomAgain',false]]) $(id).onclick = () => {
         if (!run || run.paused || saving) return;
         if (run.attempts.length >= 200) return notify('Finish and save this set before starting another.');

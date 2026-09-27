@@ -1896,3 +1896,12 @@ legend {
 .take-card button {font-size:12px;}
 @media(max-width:1100px) {.room-grid {grid-template-columns:1fr;}}
 @media(max-width:580px) {.room-work,.room-audio {padding:20px;} nav {flex-wrap:wrap;} .record-controls .primary {flex:1;} }
+.coach-panel {padding:28px;margin-bottom:28px;background:#f0f4e7;}
+.coach-panel h2 {font-size:36px;margin:12px 0;}
+.coach-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px;}
+.coach-panel label:not(.inline-check) {display:block;margin:12px 0;}
+.coach-panel .inline-check {margin:18px 0;font-size:13px;align-items:flex-start;}
+.coach-reason {margin-top:24px;padding-top:24px;border-top:1px solid #cdd6c3;}
+.coach-blocks {display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));}
+.coach-blocks article {padding:20px;background:white;border-radius:10px;border:1px solid var(--line);}
+@media(max-width:580px) {.coach-fields {grid-template-columns:1fr;} .coach-panel {padding:20px;} .coach-panel .section-top {flex-wrap:wrap;gap:12px;} }

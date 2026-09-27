@@ -11,6 +11,7 @@
   <script src="{{ url_for('static', filename='recorder.js') }}" defer></script>
   <script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
   <script src="{{ url_for('static', filename='practice-room.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='coach.js') }}" defer></script>
 </head>
 <body>
   <aside class="sidebar">
@@ -55,6 +56,8 @@
 
       <section class="view" id="practiceView" hidden>
         <div class="page-heading"><div><span class="small-caps">PLAY. LISTEN. TRY AGAIN.</span><h1>The practice <em>room.</em></h1><p>One passage. One thing to improve. No form to fill out after every try.</p></div></div>
+        <section class="panel coach-panel" aria-labelledby="coachTitle"><div class="section-top"><span class="small-caps">START WITH WHAT MATTERS</span><span id="coachConnection" class="tag">Checking AI connection…</span></div><h2 id="coachTitle">What fits into today?</h2><p>Give the coach your actual time and workload. Get a few specific tasks, a reason for each, and permission to leave the rest for another day.</p>
+          <form id="coachForm"><div class="coach-fields"><label>Minutes you really have<input id="coachMinutes" type="number" min="5" max="90" value="15" required></label><label>Energy today<select id="coachEnergy"><option value="low">Low · keep it manageable</option><option value="normal" selected>Normal</option><option value="fresh">Fresh · ready to work</option></select></label><label>Priority piece<select id="coachFocus"><option value="">Help me choose</option></select></label><label>Audition / performance date (optional)<input id="coachDate" type="date"></label></div><label>What else is competing for your time?<input id="coachWorkload" maxlength="500" placeholder="e.g. AP Calc test in 2 days. All-state in 3 weeks. I have 15 minutes."></label><label class="inline-check"><input id="coachConsent" type="checkbox" required>Send this brief, my active passage goals, and recent passage results/notes to Groq. No recordings or profile name are sent.</label><button class="primary" id="coachGenerate">Make my practice plan</button><p id="coachStatus" role="status" aria-live="polite">The AI suggests priorities; you decide what works for your playing.</p></form><div id="coachPlan"></div></section>
         <div class="room-grid">
           <section class="panel room-work"><span class="small-caps">01 / PICK YOUR PASSAGE</span>
             <div id="roomSetup"><label>Passage<select id="roomPassage"></select></label><p id="roomEmpty" hidden>Add a piece and a passage goal in Repertoire to start a tempo ladder. You can still record below.</p><a class="text-link" href="#repertoire">Manage pieces &amp; passage goals ↗</a>

@@ -4,14 +4,15 @@ import csv
 import io
 import math
 import os
+import time
 from datetime import date, timedelta
 from uuid import UUID
 
-from flask import Flask, Blueprint, Response, jsonify, render_template, request
+import coach
+from flask import Blueprint, Flask, Response, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import HTTPException
-
 
 db = SQLAlchemy()
 bp = Blueprint("workspace", __name__)
@@ -59,6 +60,12 @@ class PracticeSession(db.Model):
 class PracticeGoal(db.Model):
     profile_id = db.Column(db.Integer, db.ForeignKey("profile.id"), primary_key=True)
     weekly_minutes = db.Column(db.Integer, nullable=False, default=150)
+
+
+class CoachBudget(db.Model):
+    day = db.Column(db.String(10), primary_key=True)
+    used = db.Column(db.Integer, nullable=False, default=0)
+    last_request = db.Column(db.Float, nullable=False, default=0)
 
 
 class SessionReceipt(db.Model):
@@ -709,6 +716,129 @@ def generate_plan():
     )
     mode = choice(data.get("mode", "balanced"), MODES, "approach")
     return jsonify(minutes=minutes, mode=mode, plan=build_plan(profile, minutes, mode))
+
+
+@bp.get("/api/coach/status")
+def coach_status():
+    return jsonify(configured=bool(coach.api_key()))
+
+
+@bp.post("/api/coach")
+def coach_plan():
+    data = body()
+    profile = get_profile(data.get("profile_id"))
+    minutes = integer(data.get("minutes"), "Available time", 5, 90)
+    energy = choice(data.get("energy"), {"low", "normal", "fresh"}, "energy level")
+    workload = text_value(
+        data.get("workload", ""), "Other commitments", 500, required=False
+    )
+    target_date = data.get("target_date") or None
+    if target_date:
+        if not isinstance(target_date, str):
+            raise ValueError("Choose a valid audition date.")
+        try:
+            target_date = date.fromisoformat(target_date).isoformat()
+        except ValueError:
+            raise ValueError("Choose a valid audition date.")
+    if data.get("consent") is not True:
+        raise ValueError("Agree to send the practice context to the AI service first.")
+    key = coach.api_key()
+    if not key:
+        return jsonify(
+            error="AI isn't connected yet. The site owner needs to enable it. No AI request was sent."
+        ), 503
+    items = PracticeItem.query.filter_by(profile_id=profile.id, active=True).all()
+    selected = data.get("focus_item_id")
+    if selected is not None:
+        selected = integer(selected, "Priority piece", 1, 2147483647)
+        if selected not in {i.id for i in items}:
+            raise ValueError("Choose an active piece from this profile.")
+    rows = (
+        Passage.query.join(PracticeItem)
+        .filter(
+            PracticeItem.profile_id == profile.id,
+            PracticeItem.active.is_(True),
+            Passage.active.is_(True),
+        )
+        .all()
+    )
+    rows.sort(
+        key=lambda p: (
+            p.item_id != selected if selected else False,
+            p.item.deadline or "9999",
+            p.id,
+        )
+    )
+    passages = []
+    for p in rows[:12]:
+        s = passage_summary(p)
+        passages.append(
+            {
+                k: s[k]
+                for k in (
+                    "id",
+                    "item_id",
+                    "item_title",
+                    "label",
+                    "target_tempo",
+                    "target_reps",
+                    "tempo_unit",
+                    "suggested_tempo",
+                    "best_clean_tempo",
+                    "last_result",
+                )
+            }
+        )
+        if passages[-1]["last_result"]:
+            passages[-1]["last_result"] = {
+                **passages[-1]["last_result"],
+                "notes": passages[-1]["last_result"].get("notes", "")[:160],
+            }
+        passages[-1].update(
+            deadline=p.item.deadline,
+            confidence=p.item.confidence,
+            priority=p.item.priority,
+        )
+    if not passages:
+        raise ValueError(
+            "Add a piece and at least one passage goal in Repertoire first."
+        )
+    today = date.today().isoformat()
+    if not db.session.get(CoachBudget, today):
+        db.session.add(CoachBudget(day=today))
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+    now = time.time()
+    reserved = CoachBudget.query.filter(
+        CoachBudget.day == today,
+        CoachBudget.used < 30,
+        CoachBudget.last_request <= now - 10,
+    ).update(
+        {CoachBudget.used: CoachBudget.used + 1, CoachBudget.last_request: now},
+        synchronize_session=False,
+    )
+    db.session.commit()
+    if not reserved:
+        return jsonify(
+            error="The coach has a 10-second cooldown and a shared limit of 30 requests per day. Try later; the practice room still works."
+        ), 429
+    context = dict(
+        today=today,
+        instrument=profile.instrument,
+        minutes=minutes,
+        energy=energy,
+        other_commitments=workload,
+        audition_date=target_date,
+        priority_item_id=selected,
+        passages=passages,
+    )
+    try:
+        plan = coach.validate_plan(coach.ask(context, key), passages, minutes)
+    except coach.CoachUnavailable as error:
+        return jsonify(error=str(error)), 503
+    return jsonify(plan)
 
 
 @bp.post("/api/session")

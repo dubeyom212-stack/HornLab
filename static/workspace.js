@@ -752,6 +752,7 @@ window.addEventListener('pagehide', () => {
 });
 setInterval(updateTimer, 250);
 async function init() {
+    if (!location.hash) location.hash = location.pathname === '/about' ? 'about' : 'practice';
     $('dateLabel').textContent = new Date().toLocaleDateString(undefined, {
         weekday: 'long',
         month: 'long',

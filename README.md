@@ -10,6 +10,12 @@ I'm not in band anymore, but I still care about this problem. This is a student 
 
 The first version leaned too much on a timer and a practice log. After using it and getting feedback, it was clear that logging minutes wasn't enough. The newer Practice screen focuses on working through a passage and listening back to actual takes.
 
+## Make limited time count
+
+The newest addition is an optional AI practice coach. Tell it you have 15 minutes, low energy, a calculus test in two days, and an audition coming up. It uses that brief together with your actual passage goals and recent results to suggest what to work on, why, and what to skip today. Each task opens in the practice room and has a time budget and stopping rule.
+
+You need to connect your own Groq key first: [AI_SETUP.md](AI_SETUP.md). Until then, the app says **AI not connected** and the manual practice tools still work. The model's suggestions aren't a guarantee of improvement, and it does not listen to recordings. The live provider needs testing once a key is configured.
+
 ## Try a practice session
 
 1. In **Repertoire**, add a piece and a passage goal—something like measures 24–32, starting at 60 BPM, with a target of 80.
@@ -55,7 +61,7 @@ Recording needs a microphone, browser permission, and HTTPS (localhost works for
 
 Profiles are shared, **not private accounts**. Anyone using the same hosted app can view and change its saved practice data. Use demo data if you share it publicly. Private accounts are still needed before treating it as a personal service for multiple musicians.
 
-The app doesn't listen for wrong notes, grade tone, or generate AI feedback. Microphone recording still needs hands-on testing across real phones and microphones; automated recorder tests use simulated devices. Imported audio and the practice flow have been checked in the browser.
+The app doesn't listen for wrong notes or grade tone. Optional AI guidance uses text context and your reported results only. Microphone recording still needs hands-on testing across real phones and microphones; automated recorder tests use simulated devices. Imported audio and the practice flow have been checked in the browser.
 
 ## Development
 
@@ -66,6 +72,6 @@ python -m unittest discover -v
 node --test test_metronome.cjs test_practice.cjs
 ```
 
-Python tests cover planning, saved data, and passage results. JavaScript tests cover metronome scheduling, tempo progression, and recording lifecycle behavior. Node is only needed for those tests, not for running the app.
+Python tests cover planning, saved data, and passage results. JavaScript tests cover metronome scheduling, tempo progression, recording lifecycle behavior, and validation of AI plans. Coach tests use fixed provider responses, not live AI calls. Node is only needed for those tests, not for running the app.
 
 The project has been developed with AI coding assistance. The practice problem and product direction come from my own experience and feedback; changes still need testing with actual players.
