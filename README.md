@@ -1,128 +1,83 @@
 # HornLab
 
-**Spend less time deciding what to practice and more time playing.**
+![HornLab](static/hornlab-logo.svg)
 
-HornLab is a music practice planner created by French horn player and student
-Om Dubey. Add the pieces, auditions, assignments, and technique work on your list,
-choose how much time you have, and build a session around what needs attention.
+I'm Om Dubey. I started HornLab because practice was one more thing to figure out between AP classes, music, and everything else. I wanted a clearer answer to “what should I work on today?”
 
-## Features
+I'm not in band anymore, but I still care about this problem. This is a student project, and it is still changing as I try it and get feedback.
 
-- **Practice profiles:** store a name, instrument, and usual session length.
-- **Practice list:** add items with a category, deadline, priority, and confidence level.
-- **Session planning:** choose balanced, deadline-focused, or weakest-first planning.
-- **Guided practice:** work through a warmup and selected items with suggested time
-  allocations, directions, and a success target.
-- **Session timer:** move between practice blocks and pause or resume the timer.
-- **Practice totals:** see saved session counts, total minutes, and minutes across
-  the last seven sessions.
+## What changed after trying it
 
-The current planner uses rules based on deadlines, confidence, priority, and
-when an item was last practiced. It does not require an AI service or API key.
-Instrument names are customizable; the built-in warmup directions are horn-focused.
+The first version leaned too much on a timer and a practice log. After using it and getting feedback, it was clear that logging minutes wasn't enough. The newer Practice screen focuses on working through a passage and listening back to actual takes.
 
-## Run locally
+## Make limited time count
 
-You need Python and Git. Python 3.11 or newer is a suggested starting point.
+The newest addition is an optional AI practice coach. Tell it you have 15 minutes, low energy, a calculus test in two days, and an audition coming up. It uses that brief together with your actual passage goals and recent results to suggest what to work on, why, and what to skip today. Each task opens in the practice room and has a time budget and stopping rule.
 
-```sh
-git clone https://github.com/dubeyom212-stack/HornLab.git
-cd HornLab
-```
+You need to connect your own Groq key first: [AI_SETUP.md](AI_SETUP.md). Until then, the app says **AI not connected** and the manual practice tools still work. The model's suggestions aren't a guarantee of improvement, and it does not listen to recordings. The live provider needs testing once a key is configured.
 
-### Windows (PowerShell)
+## Try a practice session
+
+1. In **Repertoire**, add a piece and a passage goal—something like measures 24–32, starting at 60 BPM, with a target of 80.
+2. Open **Practice**, pick that passage, and choose what you're listening for.
+3. Play it once. Tap **Clean** or **Again**. A clean streak unlocks a 4 BPM increase; you can also slow down.
+4. Record a short take, listen back, and record another. Use **A** and **B** to compare them. You can import audio files too.
+5. Hit **Finish & save**. The attempts become a session note automatically. Adding your own note is optional.
+
+When repeating the same mistake isn't helping, tap **Still stuck? Try a reset**. Choose rhythm, notes, or entrances. HornLab slows the click and gives you a small exercise for up to 90 seconds, within the AI task's remaining time. Check in afterward: retry the full passage at the slower tempo, or save and leave that spot for next time. The reset and your feedback go into the session notes. Short drill work doesn't count as a clean full-passage attempt.
+
+The app doesn't decide whether your playing is clean. You do. These reset exercises are built-in suggestions, so they work without an AI connection. The AI coach can use the saved reset feedback in a later plan when you also logged a full-passage attempt; drill-only sessions stay in the session history.
+
+## Other things in the app
+
+Profiles now have an instrument picker, including the saxophone types, brass, woodwinds, strings, piano, percussion, and voice. **Other instrument** keeps custom names. Existing names such as “tenor sax” are recognized too. Use **Change instrument** after finishing your current draft to update an existing profile.
+
+Warm-ups, entrance drills, and the AI brief use a shared instrument guide. For example, saxophone gets fingering and air cues; piano gets hand coordination; percussion gets stroke patterns. Unknown instruments get neutral practice prompts rather than guessed technique. Related instruments share suitable exercises—this isn't a separate expert curriculum for each one.
+
+- A metronome with different meters, subdivisions, accents, tap tempo, and volume.
+- Pieces, passage goals, deadlines, and practice history.
+- A timed routine if you prefer one, plus weekly totals and CSV export.
+- An About page with the reason behind the project and a few photos.
+
+## Run it
+
+You need Python 3.10 or newer. Open a terminal in the folder containing `app.py` and run:
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install Flask Flask-SQLAlchemy
-.\.venv\Scripts\python.exe -m flask --app app run --port 5000
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe app.py
 ```
 
-### macOS / Linux
+Open http://127.0.0.1:5000. On macOS or Linux, use `.venv/bin/python` for the last two commands.
+
+[RUN.md](RUN.md) has more detailed instructions and help with common setup errors. [WEB.md](WEB.md) covers PythonAnywhere's free hosting and updating an existing site.
+
+## Where things are saved
+
+Pieces and finished sessions are stored in SQLite, normally `instance/hornlab.db`. Back that file up before updating. Starting the app creates missing tables without replacing existing practice data.
+
+Unfinished passage practice is saved in the browser. After a refresh it comes back paused. Use one tab per profile. Active time pauses when you leave Practice or hide the tab; saved minutes are rounded with a one-minute minimum.
+
+Recordings stay in that browser's storage, grouped by profile. They are **not uploaded**, synced between devices, or included in the session CSV. Download takes you want to keep: clearing browser data can remove them. A public website and localhost have separate browser storage.
+
+Recording needs a microphone, browser permission, and HTTPS (localhost works for development). Takes stop after three minutes or when the tab is hidden. Imported files can be up to 15 MB; the local audio collection is capped at 50 MB. If storing a take fails, the page offers a temporary download. Download it before closing the tab. Tempo labels record the practice setting, not a tempo detected from the audio.
+
+## Current limits
+
+Profiles are shared, **not private accounts**. Anyone using the same hosted app can view and change its saved practice data. Use demo data if you share it publicly. Private accounts are still needed before treating it as a personal service for multiple musicians.
+
+The app doesn't listen for wrong notes or grade tone. Optional AI guidance uses text context and your reported results only. Microphone recording still needs hands-on testing across real phones and microphones; automated recorder tests use simulated devices. Imported audio and the practice flow have been checked in the browser.
+
+## Development
+
+The backend is Flask with Flask-SQLAlchemy. The interface uses plain JavaScript, HTML, and CSS. Browser recording uses MediaRecorder, and stored audio uses IndexedDB.
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install Flask Flask-SQLAlchemy
-.venv/bin/python -m flask --app app run --port 5000
+python -m unittest discover -v
+node --test test_metronome.cjs test_practice.cjs
 ```
 
-Open [localhost:5000](http://127.0.0.1:5000). If there are no profiles, HornLab opens
-the setup page. Otherwise, it opens an existing profile. You can visit
-[/setup](http://127.0.0.1:5000/setup) to create another one.
+Python tests cover planning, saved data, and passage results. JavaScript tests cover metronome scheduling, tempo progression, recording lifecycle behavior, and validation of AI plans. Coach tests use fixed provider responses, not live AI calls. Node is only needed for those tests, not for running the app.
 
-Dependencies are installed directly here because the current repository does not
-include a requirements file. There is no frontend build step.
-
-## Your first session
-
-1. Create a profile with your instrument and usual practice time.
-2. Add a practice item, such as an audition excerpt or a technique exercise.
-3. Set its deadline, priority, and how confident you feel about it.
-4. Choose your available minutes and planning mode, then select **Build my session**.
-5. Work through the session and finish it to save your practice record.
-
-Completed items get a last-practiced date that affects future planning. Leaving
-an unfinished session does not save its progress.
-
-## How planning works
-
-The planner ranks active items using four signals:
-
-| Signal | What it represents |
-| --- | --- |
-| Deadline | How soon the item is due, including overdue work. |
-| Confidence | Whether the item needs work, is developing, or feels solid. |
-| Priority | The importance you assigned to the item. |
-| Recency | How long it has been since you last practiced it. |
-
-Balanced mode gives the most weight to deadlines and confidence. Deadline mode
-emphasizes urgency; weakest-first mode emphasizes lower confidence. The planner
-reserves time for a warmup, then selects up to four items depending on session
-length. These are suggested allocations, not an assessment of playing ability.
-
-## Data and local use
-
-HornLab uses Flask, Flask-SQLAlchemy, SQLite, Jinja templates, and browser JavaScript.
-Profiles, practice items, and sessions are stored in `instance/hornlab.db`.
-Tables are created automatically when the application starts.
-
-The current repository includes `hornlab.db` and `hornlab_old.db`, so a clone may
-already contain saved records. The app uses `hornlab.db`; the old file is not
-selected by the application. Back up your database before replacing a checkout or
-changing stored data, and do not commit personal practice records.
-
-Profiles are not password-protected accounts. The current app has no sign-in or
-access controls and is intended for trusted local use. Keep it on localhost;
-public hosting would require authentication and additional security work.
-The commands above start Flask's development server.
-
-## Project layout
-
-```text
-app.py              Routes, database models, ranking, and session planning
-templates/          Jinja pages and browser-side session behavior
-static/style.css    Application styles
-instance/           SQLite database files
-```
-
-## Troubleshooting
-
-- **Missing Flask module:** install the dependencies using the same virtual
-  environment Python that you use to start the app.
-- **Port 5000 is occupied:** use `--port 5001` and open `http://127.0.0.1:5001`.
-- **Empty plan:** add at least one active practice item to the selected profile.
-- **Unexpected existing profile:** the repository includes a database; create a
-  new profile through `/setup` if needed.
-- **Practice totals did not change:** finish the session so it is saved. The
-  recent-minutes total refers to the last seven sessions, not seven calendar days.
-
-## Contributing
-
-Create a branch for a focused change and open a pull request describing the
-behavior and how you checked it. For planner changes, check different session
-lengths, deadlines, confidence levels, and empty practice lists. For UI changes,
-check both desktop and narrow screens.
-
-The current published version does not include an automated test suite. At a
-minimum, verify profile creation, adding an item, building a plan, finishing a
-session, and the updated practice totals before proposing behavior changes.
+The project has been developed with AI coding assistance. The practice problem and product direction come from my own experience and feedback; changes still need testing with actual players.
