@@ -80,4 +80,4 @@ node --test test_metronome.cjs test_practice.cjs
 
 Python tests cover planning, saved data, and passage results. JavaScript tests cover metronome scheduling, tempo progression, recording lifecycle behavior, and validation of AI plans. Coach tests use fixed provider responses, not live AI calls. Node is only needed for those tests, not for running the app.
 
-The project has been developed with AI coding assistance. The practice problem and product direction come from my own experience and feedback; changes still need testing with actual players.
+The project has been developed with occasional coding assistance from my Dad (a site reliability engineer) and I've leaned on my sister (a computer science graduate) for feedback. The practice problem and product direction come from my own experience and feedback; changes still need testing with actual players.
