@@ -81,7 +81,7 @@ Pieces and saved sessions belong to your account. Recordings and unfinished prac
 
 ![The About page with the changes made after feedback](docs/screenshots/about-feedback.jpg)
 
-This is the public About page. Screenshots of the signed-in practice screens still need to be added.
+The [About page](https://hornlab.pythonanywhere.com/about) is public, so you can read about the project without making an account.
 
 ## Checking changes
 
