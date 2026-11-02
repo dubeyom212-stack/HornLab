@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#163f35">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='hornlab-mark.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css', v='accounts-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='accounts.css', v='1') }}">
+  <title>{{ 'Create an account' if register else 'Sign in' }} · HornLab</title>
+</head>
+<body class="account-page">
+  <header class="account-header">
+    <a href="{{ url_for('accounts.login') }}" aria-label="HornLab home"><img src="{{ url_for('static', filename='hornlab-logo.svg') }}" alt="HornLab" width="172" height="45"></a>
+    <span class="small-caps">YOUR PRACTICE NOTEBOOK</span>
+  </header>
+  <main class="account-layout">
+    <section class="account-intro" aria-labelledby="accountHeading">
+      <span class="small-caps">A PLACE TO PICK UP WHERE YOU LEFT OFF</span>
+      <h1 id="accountHeading">Back to <br>the <em>music.</em></h1>
+      <p>Keep your pieces, the measures that need another try, and a plan for the time you actually have.</p>
+      <a class="text-link" href="{{ url_for('workspace.about') }}">Why I built HornLab ↗</a>
+      <div class="account-note"><strong>Your practice, in your account.</strong><p>Other musicians cannot open your practice profiles. Recordings stay in this browser so you can listen back and compare takes.</p></div>
+    </section>
+    <section class="account-card panel" aria-labelledby="formHeading">
+      <span class="small-caps">{{ 'GET STARTED' if register else 'WELCOME BACK' }}</span>
+      <h2 id="formHeading">{{ 'Make a little space.' if register else 'Open your notebook.' }}</h2>
+      <p>{{ 'Choose a username and password. No email needed.' if register else 'Sign in to your practice profiles.' }}</p>
+      <form method="post" action="{{ url_for('accounts.register' if register else 'accounts.login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if error %}<p class="account-error" role="alert">{{ error }}</p>{% endif %}
+        <label for="username">Username</label>
+        <input id="username" name="username" value="{{ username }}" required minlength="3" maxlength="30" autocomplete="username" autocapitalize="none" spellcheck="false" aria-describedby="usernameHint"{% if register %} pattern="[A-Za-z0-9_.\-]{3,30}"{% endif %}>
+        <p id="usernameHint" class="account-hint">{{ '3 to 30 letters, numbers, periods, hyphens, or underscores.' if register else 'Usernames are not case-sensitive.' }}</p>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required maxlength="128"{% if register %} minlength="12" aria-describedby="passwordHint"{% endif %} autocomplete="{{ 'new-password' if register else 'current-password' }}">
+        {% if register %}
+        <p id="passwordHint" class="account-hint">Use at least 12 characters. A few words together work well.</p>
+        <label for="confirmPassword">Repeat password</label>
+        <input id="confirmPassword" name="confirm_password" type="password" required minlength="12" maxlength="128" autocomplete="new-password">
+        {% endif %}
+        <button type="submit" class="primary full">{{ 'Create account' if register else 'Sign in' }} <span aria-hidden="true">↗</span></button>
+      </form>
+      <p class="account-switch">{{ 'Already have an account?' if register else 'First time here?' }} <a href="{{ url_for('accounts.login' if register else 'accounts.register') }}">{{ 'Sign in' if register else 'Create an account' }}</a></p>
+      {% if not register %}<p class="account-hint recovery-note">Forgot your password? Ask the person running this HornLab site to reset it.</p>{% endif %}
+    </section>
+  </main>
+  <footer class="account-footer">A student project by Om Dubey.</footer>
+</body>
+</html>

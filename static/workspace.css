@@ -1908,3 +1908,14 @@ legend {
 .coach-blocks {display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));}
 .coach-blocks article {padding:20px;background:white;border-radius:10px;border:1px solid var(--line);}
 @media(max-width:580px) {.coach-fields {grid-template-columns:1fr;} .coach-panel {padding:20px;} .coach-panel .section-top {flex-wrap:wrap;gap:12px;} }
+
+.account-signout { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 16px; font-size: 12px; }
+.account-signout > span { display: block; overflow-wrap: anywhere; }
+
+.sidebar { overflow-y: auto; }
+.account-signout { flex-shrink: 0; }
+@media(max-width:800px) {
+    .profile-area { flex-wrap: wrap; }
+    .profile-area button { margin-left: 0; }
+    .account-signout { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; }
+}

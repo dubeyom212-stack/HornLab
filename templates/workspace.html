@@ -4,14 +4,17 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#163f35"><meta name="description" content="A student project for keeping track of horn practice: pieces, tricky passages, and what to work on next.">
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='hornlab-mark.svg') }}">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="hornlab-account" content="{{ g.account.id }}">
+  <meta name="hornlab-account-storage" content="{{ g.account.storage_id }}">
   <title>HornLab · Back to the music</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css', v='reset-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css', v='accounts-1') }}">
   <script src="{{ url_for('static', filename='metronome.js') }}" defer></script>
   <script src="{{ url_for('static', filename='practice-core.js', v='reset-1') }}" defer></script>
   <script src="{{ url_for('static', filename='recorder.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='workspace.js', v='reset-2') }}" defer></script>
-  <script src="{{ url_for('static', filename='practice-room.js', v='reset-1') }}" defer></script>
-  <script src="{{ url_for('static', filename='coach.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='workspace.js', v='accounts-1') }}" defer></script>
+  <script src="{{ url_for('static', filename='practice-room.js', v='accounts-1') }}" defer></script>
+  <script src="{{ url_for('static', filename='coach.js', v='accounts-1') }}" defer></script>
 </head>
 <body>
   {% macro instrument_picker() %}
@@ -23,7 +26,11 @@
     <nav aria-label="Workspace"><a href="#today" data-view="today"><span aria-hidden="true">◈</span> Today</a><a href="#practice" data-view="practice"><span aria-hidden="true">●</span> Practice</a><a href="#repertoire" data-view="repertoire"><span aria-hidden="true">♫</span> Repertoire <small id="itemCount">0</small></a><a href="#progress" data-view="progress"><span aria-hidden="true">▥</span> Progress</a><a href="#about" data-view="about"><span aria-hidden="true">↗</span> About</a></nav>
     <div class="sidebar-note"><span class="small-caps">NOTE TO SELF</span><p>Slow it down.<br>Try that measure again.</p><div class="note-lines" aria-hidden="true">∿∿∿∿</div></div>
     <div class="profile-area"><label for="profileSelect">Practice profile</label><select id="profileSelect" aria-label="Switch practice profile"></select><button class="text-button" id="newProfile">+ New profile</button><button class="text-button" id="editInstrument">Change instrument</button></div>
-
+    <form class="account-signout" action="{{ url_for('accounts.logout') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <span>Signed in as <strong>{{ g.account.username }}</strong></span>
+      <button class="text-button" type="submit">Sign out</button>
+    </form>
   </aside>
   <main>
     <header class="topline"><span id="dateLabel"></span><span class="workspace-badge"><i></i> PRACTICE NOTEBOOK</span></header>
@@ -93,22 +100,7 @@
       <section class="view" id="progressView" hidden><div class="page-heading"><div><span class="small-caps">YOUR PRACTICE LOG</span><h1>How’s it <em>going?</em></h1><p>Look back at your sessions and see which passages are getting easier.</p></div><a class="secondary" id="exportLink" href="#">Export history ↓</a></div><div class="stat-grid"><div class="panel"><span class="small-caps">ALL-TIME PRACTICE</span><strong id="totalMinutes">0</strong><small>minutes played</small></div><div class="panel"><span class="small-caps">SESSIONS COMPLETED</span><strong id="totalSessions">0</strong><small>sessions saved</small></div><div class="panel"><span class="small-caps">CURRENT STREAK</span><strong id="progressStreak">0</strong><small>consecutive days</small></div></div><section class="panel chart-panel"><div class="section-top"><div><span class="small-caps">THE LAST TWO WEEKS</span><h2>Practice this fortnight</h2></div><span id="weekComparison" class="quiet"></span></div><div id="activityChart" class="activity-chart" role="img" aria-label="Daily practice minutes for the last 14 days"></div><div id="chartAccessible" class="sr-only"></div></section><section class="section-block"><div class="section-top"><div><span class="small-caps">BEYOND THE MINUTES</span><h2>Passage progress</h2></div></div><p class="quiet">Self-reported results, compared using the same tempo unit. Best clean tempo meets your current repetition goal.</p><div id="passageProgress"></div></section><section class="section-block"><div class="section-top"><h2>Session journal</h2><button class="secondary" id="manualSession">+ Log practice</button></div><p class="quiet">Your latest 100 sessions. Export includes your full history.</p><div id="sessionHistory"></div></section></section>
     </div>
     <section class="view about-page" id="aboutView" hidden aria-labelledby="aboutTitle">
-      <div class="page-heading"><div><span class="small-caps">A BIT ABOUT HORNLAB</span><h1 id="aboutTitle">From one horn player<br>to <em>another.</em></h1></div></div>
-      <div class="about-story">
-        <figure class="about-main-photo"><img src="{{ url_for('static', filename='images/marching.jpg') }}" alt="A marching band musician holding a mellophone on the field" width="734" height="890"><figcaption>On the field.</figcaption></figure>
-        <div class="about-copy"><span class="small-caps">HI, I’M OM DUBEY</span><h2>I needed a plan, too.</h2>
-          <p>Between AP classes, music, and other commitments, finding time to practice was stressful enough. Figuring out what to do with that time made it harder.</p>
-          <p>I felt like a lot of musicians were dealing with the same thing: wanting to improve, but not having much structure when they sat down to practice. I wanted something that would help me make a plan and feel motivated to follow it.</p>
-          <p>That’s why I started HornLab. Pick how much time you have, keep track of the passages that need work, and leave yourself a note for next time.</p>
-          <p>I’m not in band anymore, but this is still a problem I care about. HornLab is my way of working on a solution.</p>
-          <a href="#today" class="text-link">Back to practice ↗</a>
-        </div>
-      </div>
-      <div class="about-snapshots">
-        <figure><img src="{{ url_for('static', filename='images/field.jpg') }}" alt="A band musician posing with two people on a football field" loading="lazy" width="2592" height="1944"><figcaption>From my time in band.</figcaption></figure>
-        <figure><img src="{{ url_for('static', filename='images/outside-practice.jpeg') }}" alt="A portrait beside a lake at sunset" loading="lazy"><figcaption>Away from the music stand.</figcaption></figure>
-      </div>
-      <details class="about-storage panel"><summary>Where your practice notes live</summary><p>Profiles on this copy of HornLab share the same workspace. They aren’t private, password-protected accounts. Your pieces and practice history are saved on the computer running the app.</p><p>The timer can resume in the same browser after a refresh. Dates and weekly totals follow the computer running HornLab.</p></details>
+      {% include '_about_content.html' %}
     </section>
     <footer><span>HORN<span class="slash">//</span>LAB</span><span>Back to the music.</span></footer>
   </main>

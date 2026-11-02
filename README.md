@@ -10,6 +10,12 @@ I'm not in band anymore, but I still care about this problem. This is a student 
 
 The first version leaned too much on a timer and a practice log. After using it and getting feedback, it was clear that logging minutes wasn't enough. The newer Practice screen focuses on working through a passage and listening back to actual takes.
 
+## Private practice accounts
+
+Create an account before adding your practice profiles. Other musicians on the same hosted site cannot open or change your pieces, passage results, session notes, goals, or exports. The public About page at `/about` explains the project without a sign-in. [ACCOUNTS.md](ACCOUNTS.md) covers upgrading existing data and helping pilot testers recover an account.
+
+The next product milestone is a small musician pilot. [PILOT.md](PILOT.md) describes what to try and what feedback to record.
+
 ## Make limited time count
 
 The newest addition is an optional AI practice coach. Tell it you have 15 minutes, low energy, a calculus test in two days, and an audition coming up. It uses that brief together with your actual passage goals and recent results to suggest what to work on, why, and what to skip today. Each task opens in the practice room and has a time budget and stopping rule.
@@ -49,7 +55,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe app.py
 ```
 
-Open http://127.0.0.1:5000. On macOS or Linux, use `.venv/bin/python` for the last two commands.
+Open http://127.0.0.1:5000 and choose **Create an account**. On macOS or Linux, use `.venv/bin/python` for the last two commands.
 
 [RUN.md](RUN.md) has more detailed instructions and help with common setup errors. [WEB.md](WEB.md) covers PythonAnywhere's free hosting and updating an existing site.
 
@@ -59,13 +65,13 @@ Pieces and finished sessions are stored in SQLite, normally `instance/hornlab.db
 
 Unfinished passage practice is saved in the browser. After a refresh it comes back paused. Use one tab per profile. Active time pauses when you leave Practice or hide the tab; saved minutes are rounded with a one-minute minimum.
 
-Recordings stay in that browser's storage, grouped by profile. They are **not uploaded**, synced between devices, or included in the session CSV. Download takes you want to keep: clearing browser data can remove them. A public website and localhost have separate browser storage.
+Recordings stay in that browser's storage, separated by account and grouped by profile. They are **not uploaded**, synced between devices, or included in the session CSV. Download takes you want to keep: clearing browser data can remove them. A public website and localhost have separate browser storage.
 
 Recording needs a microphone, browser permission, and HTTPS (localhost works for development). Takes stop after three minutes or when the tab is hidden. Imported files can be up to 15 MB; the local audio collection is capped at 50 MB. If storing a take fails, the page offers a temporary download. Download it before closing the tab. Tempo labels record the practice setting, not a tempo detected from the audio.
 
 ## Current limits
 
-Profiles are shared, **not private accounts**. Anyone using the same hosted app can view and change its saved practice data. Use demo data if you share it publicly. Private accounts are still needed before treating it as a personal service for multiple musicians.
+Practice profiles belong to a signed-in account. The site operator manages the database and backups. Password recovery currently needs the operator's help, and browser recordings are not encrypted or synced. Finish a real-device check and the two-account isolation checks in [ACCOUNTS.md](ACCOUNTS.md) before inviting a wider group.
 
 The app doesn't listen for wrong notes or grade tone. Optional AI guidance uses text context and your reported results only. Microphone recording still needs hands-on testing across real phones and microphones; automated recorder tests use simulated devices. Imported audio and the practice flow have been checked in the browser.
 
@@ -78,6 +84,6 @@ python -m unittest discover -v
 node --test test_metronome.cjs test_practice.cjs
 ```
 
-Python tests cover planning, saved data, and passage results. JavaScript tests cover metronome scheduling, tempo progression, recording lifecycle behavior, and validation of AI plans. Coach tests use fixed provider responses, not live AI calls. Node is only needed for those tests, not for running the app.
+Python tests cover planning, saved data, passage results, account isolation, sign-in revocation, CSRF checks, request limits, and migration of existing shared profiles. JavaScript tests cover metronome scheduling, tempo progression, recording lifecycle behavior, and validation of AI plans. Coach tests use fixed provider responses, not live AI calls. Node is only needed for those tests, not for running the app.
 
 The project has been developed with occasional coding assistance from my Dad (a site reliability engineer) and I've leaned on my sister (a computer science graduate) for feedback. The practice problem and product direction come from my own experience and feedback; changes still need testing with actual players.

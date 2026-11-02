@@ -9,8 +9,8 @@
     function persistRun() {
         if (!owner) return;
         try {
-            if (run) localStorage.setItem(key(), JSON.stringify(run));
-            else localStorage.removeItem(key());
+            if (run) storage.set(key(), JSON.stringify(run));
+            else storage.remove(key());
         } catch { notify('This browser could not save your practice draft. Finish this session before closing the tab.', true); }
     }
     function tick() {
@@ -84,7 +84,7 @@
             owner = id; run = null; compare = {};
             $('roomResetStatus').textContent = ''; $('roomResetSetup').hidden = true;
             try {
-                const saved = JSON.parse(localStorage.getItem(key()));
+                const saved = JSON.parse(storage.get(key()));
                 if (saved?.version === 1 && saved.profile_id === id && Array.isArray(saved.attempts) && saved.passage && Number.isFinite(saved.seconds)) run = {...saved,paused:true};
             } catch {}
             $('roomNote').value = run?.note || '';
@@ -182,14 +182,14 @@
         try {
             const result=HornPractice.result(draft);
             await api('/api/session','POST',{profile_id:draft.profile_id,token:draft.token,duration:Math.max(1,Math.min(720,Math.round(draft.seconds/60))),focus:`${draft.passage.item_title} · ${draft.passage.label}`.slice(0,200),notes:`${HornPractice.resetSummary(draft)}Passage practice: ${draft.goal}. Active time ${time(draft.seconds)} (minutes rounded, minimum 1).\n${draft.attempts.map(a=>`${a.tempo}: ${a.clean?'clean':'again'}`).join('; ')}\n${draft.note}`,completed_item_ids:result?[draft.passage.item_id]:[],passage_results:result?[result]:[]});
-            localStorage.removeItem(`hornlab:room:${draft.profile_id}`);
+            storage.remove(`hornlab:room:${draft.profile_id}`);
             if(run===draft) {run=null;$('roomNote').value='';}
             await refresh(); notify('Practice saved. Your takes are still here to listen to.');
         } finally { saving=false; draw(); }
     });
     function openDB() {
         return new Promise((resolve,reject)=>{
-            const req=indexedDB.open('hornlab-audio',1);
+            const req=indexedDB.open(`hornlab-audio:${accountStorage}`,1);
             req.onupgradeneeded=()=>req.result.createObjectStore('takes',{keyPath:'id'});
             req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
         });

@@ -57,7 +57,7 @@ To stop HornLab, return to the terminal and press **Ctrl+C**. Closing the browse
 
 ## 4. Your first practice session
 
-1. Create a practice profile, or select an existing one.
+1. Create an account or sign in, then create a practice profile or select one of your own. Old shared profiles need an explicit assignment by the host owner; see [ACCOUNTS.md](ACCOUNTS.md).
 2. Open **Repertoire** and add a piece or practice goal.
 3. Set its confidence, priority, and optional deadline.
 4. Open **Today**, choose your available time, and click **Build my session**.
@@ -105,7 +105,7 @@ Stop HornLab with **Ctrl+C**, back up `instance/hornlab.db`, and download the la
 | The browser says it cannot connect | Check that the terminal is still running the app and use the exact address printed there. |
 | Port 5000 is already in use | An earlier HornLab session may still be running. Use it, stop it with Ctrl+C, or choose another port as shown below. |
 | You see an older version | Stop the old app before starting the upgraded folder. Confirm you downloaded the upgrade branch, then refresh the browser. |
-| Your previous profile is missing | Different extracted folders have separate databases. See the data section below before moving files. |
+| Your previous profile is missing | Confirm you are using the correct database. Existing shared profiles remain hidden until the host owner assigns them to your account; see [ACCOUNTS.md](ACCOUNTS.md). |
 
 To use port 5001 instead:
 

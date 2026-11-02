@@ -16,6 +16,21 @@ from app import (
 )
 
 
+def registered_client(app, username="musician", password="test practice passphrase"):
+    client = app.test_client()
+    client.get("/register")
+    with client.session_transaction() as signed_session:
+        csrf = signed_session["csrf"]
+    response = client.post("/register", data={
+        "username": username, "password": password, "confirm_password": password,
+        "csrf_token": csrf,
+    })
+    assert response.status_code == 302, response.text
+    with client.session_transaction() as signed_session:
+        client.environ_base["HTTP_X_CSRF_TOKEN"] = signed_session["csrf"]
+    return client
+
+
 class HornLabTests(unittest.TestCase):
     def setUp(self):
         self.app = create_app(
@@ -23,7 +38,7 @@ class HornLabTests(unittest.TestCase):
         )
         self.context = self.app.app_context()
         self.context.push()
-        self.client = self.app.test_client()
+        self.client = registered_client(self.app)
         self.profile = self.client.post(
             "/api/profiles", json={"name": "Musician"}
         ).json["profile"]["id"]

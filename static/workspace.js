@@ -1,4 +1,8 @@
 'use strict';
+const accountId = document.querySelector('meta[name="hornlab-account"]').content;
+const accountStorage = document.querySelector('meta[name="hornlab-account-storage"]').content;
+const scopedKey = key => `hornlab-account:${accountStorage}:${key}`;
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 const $ = (id) => document.getElementById(id);
 const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({
     '&': '&amp;',
@@ -24,21 +28,21 @@ const state = {
 const storage = {
     get(key) {
         try {
-            return localStorage.getItem(key);
+            return localStorage.getItem(scopedKey(key));
         } catch {
             return null;
         }
     },
     set(key, value) {
         try {
-            localStorage.setItem(key, value);
+            localStorage.setItem(scopedKey(key), value);
         } catch {
             notify('Browser storage is unavailable. Keep this tab open to retain the timer.', true);
         }
     },
     remove(key) {
         try {
-            localStorage.removeItem(key);
+            localStorage.removeItem(scopedKey(key));
         } catch {}
     }
 };
@@ -56,9 +60,11 @@ function notify(message, error = false) {
 async function api(path, method = 'GET', data) {
     const response = await fetch(path, {
         method,
-        headers: data ? {
-            'Content-Type': 'application/json'
-        } : {},
+        credentials: 'same-origin',
+        headers: {
+            'X-CSRF-Token': csrfToken,
+            ...(data ? {'Content-Type': 'application/json'} : {})
+        },
         body: data ? JSON.stringify(data) : undefined
     });
     let result;
@@ -67,6 +73,7 @@ async function api(path, method = 'GET', data) {
     } catch {
         throw new Error('The server did not return a valid response. Please retry.');
     }
+    if (response.status === 401) location.assign('/login');
     if (!response.ok) throw new Error(result.error || 'Something went wrong. Please retry.');
     return result;
 }
@@ -506,7 +513,7 @@ $('editInstrument').onclick = () => {
 };
 handleForm('instrumentForm', async form => {
     await api(`/api/profiles/${state.profile.id}/instrument`, 'PATCH', {instrument:instrumentValue(form)});
-    localStorage.removeItem(`hornlab:coach:${state.profile.id}`);
+    storage.remove(`hornlab:coach:${state.profile.id}`);
     location.reload();
 });
 handleForm('profileForm', async form => {
@@ -793,4 +800,20 @@ async function init() {
     if (location.pathname === '/setup' && state.profile) openDialog('profileDialog');
     if (location.pathname === '/about' && !location.hash) location.hash = 'about';
 }
+// Reload a cached private page rather than displaying the previous sign-in.
+window.addEventListener('pageshow', event => {
+    if (event.persisted) location.reload();
+});
+document.addEventListener('visibilitychange', async () => {
+    if (document.hidden) return;
+    try {
+        const response = await fetch('/api/account', {cache: 'no-store'});
+        if (response.status === 401) location.assign('/login');
+        else if (response.ok) {
+            const current = await response.json();
+            if (String(current.id) !== accountId || current.storage_id !== accountStorage) location.reload();
+        }
+    } catch {} // Offline practice drafts remain available in the current tab.
+});
+
 guard(init)();

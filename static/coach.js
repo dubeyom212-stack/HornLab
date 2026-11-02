@@ -8,7 +8,7 @@
     }
     async function sync() {
         const id=state.profile?.id;if(!id)return;
-        if(owner!==id){owner=id;plan=null;try{const saved=JSON.parse(localStorage.getItem(planKey(id)));if(saved?.source==='ai'&&Array.isArray(saved.blocks))plan=saved;}catch{}renderPlan();}
+        if(owner!==id){owner=id;plan=null;try{const saved=JSON.parse(storage.get(planKey(id)));if(saved?.source==='ai'&&Array.isArray(saved.blocks))plan=saved;}catch{}renderPlan();}
         const selected=$('coachFocus').value;
         $('coachFocus').innerHTML='<option value="">Help me choose</option>'+state.items.filter(i=>i.active).map(i=>`<option value="${i.id}">${escapeHTML(i.title)}</option>`).join('');
         if(state.items.some(i=>String(i.id)===selected&&i.active))$('coachFocus').value=selected;

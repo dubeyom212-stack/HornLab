@@ -16,6 +16,8 @@ BASE = "https://raw.githubusercontent.com/dubeyom212-stack/HornLab/codex/advance
 
 def main():
     root = Path.cwd()
+    if (root / "accounts.py").exists():
+        raise SystemExit("This practice-only updater cannot update private-account releases. Use the complete source package and ACCOUNTS.md.")
     if not (root / "app.py").is_file() or not (root / "templates/workspace.html").is_file():
         raise SystemExit("Open your HornLab app folder first, then run this updater again.")
     pending = {}

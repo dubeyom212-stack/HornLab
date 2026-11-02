@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#163f35">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='hornlab-mark.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css', v='accounts-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='accounts.css', v='1') }}">
+  <title>Why I built HornLab · Om Dubey</title>
+</head>
+<body class="account-page">
+  <header class="account-header">
+    <a href="{{ url_for('accounts.login') }}" aria-label="HornLab home"><img src="{{ url_for('static', filename='hornlab-logo.svg') }}" alt="HornLab" width="172" height="45"></a>
+    <a class="secondary" href="{{ url_for('accounts.register') }}">Try HornLab ↗</a>
+  </header>
+  <main class="project-main">
+    <section class="about-page" aria-labelledby="aboutTitle">{% include '_about_content.html' %}</section>
+  </main>
+</body>
+</html>

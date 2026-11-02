@@ -10,12 +10,14 @@ from uuid import UUID
 
 import coach
 from instruments import INSTRUMENTS, instrument_guidance
-from flask import Blueprint, Flask, Response, jsonify, render_template, request
-from flask_sqlalchemy import SQLAlchemy
+from flask import Blueprint, Flask, Response, g, jsonify, render_template, request
+from sqlalchemy import inspect, text
+
+from accounts import install_accounts
+from database import db
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import HTTPException
 
-db = SQLAlchemy()
 bp = Blueprint("workspace", __name__)
 CATEGORIES = {"repertoire", "technique", "audition", "performance", "assignment"}
 PRIORITIES = {"low", "medium", "high"}
@@ -25,6 +27,8 @@ MODES = {"balanced", "deadline", "weakest"}
 
 class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    # NULL keeps legacy shared profiles hidden until the owner assigns them.
+    owner_id = db.Column(db.Integer, db.ForeignKey("account.id"), index=True)
     name = db.Column(db.String(100), nullable=False)
     instrument = db.Column(db.String(100), nullable=False, default="French horn")
     typical_time = db.Column(db.Integer, nullable=False, default=30)
@@ -339,7 +343,10 @@ def choice(value, allowed, label):
 
 def get_profile(value):
     profile_id = integer(value, "Profile", 1, 2147483647)
-    return db.get_or_404(Profile, profile_id, description="Profile not found.")
+    return db.first_or_404(
+        db.select(Profile).filter_by(id=profile_id, owner_id=g.account.id),
+        description="Profile not found.",
+    )
 
 
 def serialize_item(item):
@@ -620,10 +627,16 @@ def build_plan(profile, minutes, mode="balanced"):
     return plan
 
 
-@bp.get("/")
 @bp.get("/setup")
-@bp.get("/about")
+@bp.get("/")
 def index():
+    return render_template("workspace.html", instruments=INSTRUMENTS)
+
+
+@bp.get("/about")
+def about():
+    if not g.account:
+        return render_template("project.html")
     return render_template("workspace.html", instruments=INSTRUMENTS)
 
 
@@ -638,7 +651,7 @@ def profiles():
                 guidance=instrument_guidance(p.instrument),
                 typical_time=p.typical_time,
             )
-            for p in Profile.query.order_by(Profile.name).all()
+            for p in Profile.query.filter_by(owner_id=g.account.id).order_by(Profile.name).all()
         ]
     )
 
@@ -647,6 +660,7 @@ def profiles():
 def create_profile():
     data = body()
     profile = Profile(
+        owner_id=g.account.id,
         name=text_value(data.get("name"), "Name", 100),
         instrument=text_value(data.get("instrument", "French horn"), "Instrument", 100),
         typical_time=integer(data.get("typical_time", 30), "Practice time", 5, 180),
@@ -1026,10 +1040,12 @@ def create_app(config=None):
         ),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         MAX_CONTENT_LENGTH=65536,
+        SECRET_KEY=os.environ.get("HORNLAB_SECRET_KEY"),
     )
     if config:
         app.config.update(config)
     db.init_app(app)
+    install_accounts(app)
     app.register_blueprint(bp)
 
     @app.errorhandler(ValueError)
@@ -1043,6 +1059,15 @@ def create_app(config=None):
 
     with app.app_context():
         db.create_all()
+        # create_all leaves existing tables alone. This additive migration keeps
+        # old profiles, goals, sessions, and passage results intact.
+        if "owner_id" not in {c["name"] for c in inspect(db.engine).get_columns("profile")}:
+            with db.engine.begin() as connection:
+                connection.execute(text(
+                    "ALTER TABLE profile ADD COLUMN owner_id INTEGER REFERENCES account (id)"
+                ))
+            for index in Profile.__table__.indexes:
+                index.create(db.engine, checkfirst=True)
     return app
 
 

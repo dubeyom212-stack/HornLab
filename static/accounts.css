@@ -1,0 +1,35 @@
+.account-page { min-height: 100vh; }
+.account-header { max-width: 1180px; margin: 0 auto; padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.account-header img { display: block; max-width: 100%; }
+main.account-layout { margin: 0 auto; padding: 56px 40px 64px; max-width: 1180px; display: grid; grid-template-columns: 1.15fr 1fr; align-items: center; gap: clamp(32px, 7vw, 100px); min-height: 0; }
+.account-intro h1 { font-size: clamp(56px, 7vw, 88px); line-height: 1; margin: 24px 0; font-weight: 400; }
+.account-intro > p { max-width: 34ch; font-size: 18px; line-height: 1.7; }
+.account-note { border-left: 3px solid var(--green); padding: 2px 0 2px 20px; margin-top: 40px; max-width: 43ch; }
+.account-note p { margin: 8px 0 0; color: #526158; }
+.account-card { padding: 32px; }
+.account-card h2 { font-size: 32px; margin: 12px 0 8px; }
+.account-card > p { margin-top: 0; }
+.account-card form { margin-top: 26px; }
+.account-card form > label { display: block; font-weight: 600; margin: 20px 0 7px; }
+.account-card input:not([type="hidden"]) { width: 100%; min-height: 46px; }
+.account-card .primary { margin-top: 28px; min-height: 48px; }
+.account-hint { color: #526158; font-size: 12px; margin: 8px 0 0; }
+.account-error { background: #fff1ed; border: 1px solid #edc5b8; color: #7b2918; border-radius: 6px; padding: 12px 14px; }
+.account-switch { margin: 24px 0 0 !important; text-align: center; }
+.account-switch a { color: var(--green); font-weight: 600; }
+.recovery-note { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 20px !important; }
+footer.account-footer { display: block; max-width: 1180px; margin: 0 auto; padding: 20px 40px; border: 0; color: #526158; }
+@media (max-width: 760px) {
+  .account-header { padding: 24px; }
+  .account-header .small-caps { display: none; }
+  main.account-layout { grid-template-columns: 1fr; padding: 16px 24px 32px; gap: 28px; }
+  .account-intro h1 { font-size: 56px; margin: 16px 0; }
+  .account-intro h1 br { display: none; }
+  .account-intro > p { max-width: none; font-size: 16px; }
+  .account-note { margin-top: 20px; max-width: none; }
+  .account-card { padding: 24px; }
+  footer.account-footer { padding: 16px 24px; }
+}
+
+main.project-main { margin: 0 auto; padding: 32px 40px 64px; max-width: 1180px; }
+@media (max-width: 760px) { main.project-main { padding: 16px 24px 32px; } }

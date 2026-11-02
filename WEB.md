@@ -6,7 +6,7 @@ The free plan currently includes one small web app, 512 MiB storage, and a one-m
 
 ## Before sharing
 
-This version has shared profiles, not private accounts: visitors can view and change the same practice data. Start with a fresh demo database and sample notes. Do not upload your local database. Private use by multiple musicians needs login and access controls first. The About photos and name will be visible to anyone with the public URL.
+This version has private sign-in and account-owned practice profiles. Install the complete source from the branch or release you intend to test, then follow [ACCOUNTS.md](ACCOUNTS.md) to upgrade and assign any old shared profiles. Verify two separate accounts cannot see each other's practice data before inviting testers. About photos and your name are visible on the public `/about` page.
 
 ## 1. Create your hosting account
 
@@ -14,7 +14,7 @@ Open [PythonAnywhere](https://www.pythonanywhere.com/pricing/) and choose the li
 
 ## 2. Upload the latest ZIP
 
-Use **HornLab-advanced.zip from this chat**, which includes the About page, photos, and logo. On PythonAnywhere open **Files**, stay in `/home/YOURUSERNAME`, and upload the ZIP. Do not upload a Windows virtual environment or your `instance` folder.
+Use a source ZIP of the complete branch or release being tested, including account templates and scripts. Do not use an older practice-only ZIP. If using GitHub's **Download ZIP**, extract it locally and repackage its contents as `HornLab-advanced.zip` so `app.py`, `accounts.py`, and the source folders are directly inside the archive. On PythonAnywhere open **Files**, stay in `/home/YOURUSERNAME`, and upload the ZIP. Do not upload a Windows virtual environment or your `instance` folder.
 
 Open **Consoles → Bash**. The following commands go in that PythonAnywhere Bash console, not in Windows PowerShell or a Python prompt. Run each separately:
 
@@ -87,7 +87,7 @@ Map only that static folder, not the entire project or database folder. [Static-
 
 Click the green **Reload** button on the Web tab, then open `https://YOURUSERNAME.pythonanywhere.com`.
 
-Create a demo profile and add a sample piece. Check About, all three photos, the metronome, and saving a session. Refresh to check the result is still there. Open the same URL on your phone. Once these work, that is the link you can share; `127.0.0.1` is not a public link.
+Create a test account and profile, then add a sample piece. In a separate browser profile, create a second account and check that its profile list is empty. Check About, all three photos, the metronome, and saving a session. Refresh to check the result is still there. Open the same URL on your phone. Once these work, that is the link you can share; `127.0.0.1` is not a public link.
 
 This publishes a mobile-friendly website. It does not yet add full PWA installation/offline support or submit anything to an app store.
 
@@ -118,15 +118,8 @@ unzip -o HornLab-advanced.zip -d HornLab
 This ZIP contains source files, not a database. The command replaces matching source files and keeps your `instance` database. In the Web tab click **Reload**, then refresh the website. You should see **Practice** in the navigation. There are no new Python dependencies for this update.
 
 Use your **https://** website address for microphone access. Click **Record a take**, allow the microphone, play a short passage, and click **Stop**. Try playback before relying on the recording. Audio stays in that browser; recordings made on localhost do not transfer to the public site. Download them from the original browser if you want to import them on the public site.
-# Install the practice reset and instrument update
+## Account release updates
 
-In your PythonAnywhere Bash console, open the folder containing `app.py`. For the current HornLab account:
+Use the complete source package described above. Preserve `instance/hornlab.db` and `instance/session.key` while replacing the source files, then click **Reload**. See [ACCOUNTS.md](ACCOUNTS.md) for the migration and recovery commands.
 
-```bash
-cd /home/HornLab/HornLab
-curl -fL https://raw.githubusercontent.com/dubeyom212-stack/HornLab/codex/advanced-practice-workspace/update_practice.py -o /tmp/hornlab-update.py
-python /tmp/hornlab-update.py
-```
-
-Then click **Web → Reload**. The updater downloads the eight required source files before replacing any, and saves the previous versions under `~/.config/hornlab/backups/`. It does not change the database or Groq key. If downloading fails, stop and read the error before reloading. The new scripts have versioned URLs so the browser requests the updated practice controls.
-
+Do not run the older practice-only updater on an account-enabled site: it downloads a different branch and can overwrite access controls. No new Python packages are needed for the account release.
