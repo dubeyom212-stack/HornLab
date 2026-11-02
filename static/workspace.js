@@ -204,7 +204,7 @@ function renderOverview() {
         medium: 1,
         low: 2
     } [b.priority]));
-    $('focusCards').innerHTML = ranked.slice(0, 3).map(i => `<article class="focus-card"><div class="section-top"><span class="tag">${escapeHTML(i.category)}</span>${i.priority==='high'?'<span class="tag urgent">High priority</span>':''}</div><h3>${escapeHTML(i.title)}</h3><div class="card-bottom"><span>${escapeHTML(label(i.confidence))}</span><span>${escapeHTML(dueText(i))}</span></div></article>`).join('') || empty('A fresh music stand.', 'Add a piece, audition, or technique goal to build your first session.', '<button class="secondary" data-add>Add your first item +</button>');
+    $('focusCards').innerHTML = ranked.slice(0, 3).map(i => `<article class="focus-card"><div class="section-top"><span class="tag">${escapeHTML(i.category)}</span>${i.priority==='high'?'<span class="tag urgent">High priority</span>':''}</div><h3>${escapeHTML(i.title)}</h3><div class="card-bottom"><span>${escapeHTML(label(i.confidence))}</span><span>${escapeHTML(dueText(i))}</span></div><button class="secondary" data-item-practice="${i.id}">Practice ↗</button></article>`).join('') || empty('A fresh music stand.', 'Add a piece, audition, or technique goal to build your first session.', '<button class="secondary" data-add>Add your first item +</button>');
 }
 
 function renderLibrary() {
@@ -212,7 +212,7 @@ function renderLibrary() {
     const category = $('categoryFilter').value;
     const archived = $('statusFilter').value === 'archived';
     const items = state.items.filter(i => Boolean(i.active) !== archived && (category === 'all' || i.category === category) && i.title.toLowerCase().includes(query));
-    $('libraryList').innerHTML = items.map(i => `<article class="library-item"><div><span class="tag">${escapeHTML(i.category)}</span><h3>${escapeHTML(i.title)}</h3><p>${i.last_practiced?'Last practiced '+escapeHTML(dayText(i.last_practiced)):'Not practiced yet'}</p></div><div class="meta"><strong>${escapeHTML(label(i.confidence))}</strong>${escapeHTML(dueText(i))}</div><div class="meta"><strong>PRIORITY</strong>${escapeHTML(label(i.priority))}</div><div class="actions"><button data-edit="${i.id}" aria-label="Edit ${escapeHTML(i.title)}">Edit</button><button data-archive="${i.id}">${i.active?'Archive':'Restore'}</button></div></article>`).join('') || empty(query || category !== 'all' ? 'No matching items.' : archived ? 'Nothing archived.' : 'Your music stand is empty.', query || category !== 'all' ? 'Try another search or category.' : archived ? 'Archived repertoire can be restored here.' : 'Add the music you want to move forward.', !archived && !query ? '<button class="secondary" data-add>+ Add repertoire</button>' : '');
+    $('libraryList').innerHTML = items.map(i => `<article class="library-item"><div><span class="tag">${escapeHTML(i.category)}</span><h3>${escapeHTML(i.title)}</h3><p>${i.last_practiced?'Last practiced '+escapeHTML(dayText(i.last_practiced)):'Not practiced yet'}</p></div><div class="meta"><strong>${escapeHTML(label(i.confidence))}</strong>${escapeHTML(dueText(i))}</div><div class="meta"><strong>PRIORITY</strong>${escapeHTML(label(i.priority))}</div><div class="actions">${i.active ? `<button data-item-practice="${i.id}" aria-label="Practice ${escapeHTML(i.title)}">Practice ↗</button>` : ''}<button data-edit="${i.id}" aria-label="Edit ${escapeHTML(i.title)}">Edit</button><button data-archive="${i.id}">${i.active?'Archive':'Restore'}</button></div></article>`).join('') || empty(query || category !== 'all' ? 'No matching items.' : archived ? 'Nothing archived.' : 'Your music stand is empty.', query || category !== 'all' ? 'Try another search or category.' : archived ? 'Archived repertoire can be restored here.' : 'Add the music you want to move forward.', !archived && !query ? '<button class="secondary" data-add>+ Add repertoire</button>' : '');
 }
 
 function renderProgress() {
@@ -234,7 +234,12 @@ function editItem(id) {
     const form = $('itemForm');
     form.reset();
     const item = state.items.find(i => i.id === Number(id));
-    $('itemDialogTitle').textContent = item ? 'Keep your repertoire current' : 'Add to your music stand';
+    $('itemDialogTitle').textContent = item ? 'Keep your repertoire current' : 'Add a piece. Start playing.';
+    $('itemDetails').open = !!item;
+    $('saveItem').textContent = item ? 'Save changes' : 'Save piece';
+    $('saveItemPractice').hidden = !!item;
+    $('quickPracticeHelp').hidden = !!item;
+    $('itemPasteList').hidden = !!item;
     for (const key of ['id', 'title', 'category', 'priority', 'confidence', 'deadline']) {
         if (item) form.elements[key].value = item[key] ?? '';
     }
@@ -479,15 +484,15 @@ function handleForm(id, submit) {
     $(id).addEventListener('submit', async event => {
         event.preventDefault();
         const form = event.currentTarget;
-        const button = form.querySelector('button.primary');
-        button.disabled = true;
+        const buttons = [...form.querySelectorAll('button[type="submit"], button.primary')].map(button => [button, button.disabled]);
+        buttons.forEach(([button]) => button.disabled = true);
         form.querySelector('.form-error').textContent = '';
         try {
-            await submit(form);
+            await submit(form, event.submitter);
         } catch (error) {
             form.querySelector('.form-error').textContent = error.message;
         } finally {
-            button.disabled = false;
+            buttons.forEach(([button, disabled]) => button.disabled = disabled);
         }
     });
 }
@@ -528,15 +533,48 @@ handleForm('profileForm', async form => {
     await selectProfile(result.profile.id);
     notify('Your practice space is ready. Add your first repertoire item.');
 });
-handleForm('itemForm', async form => {
+handleForm('itemForm', async (form, submitter) => {
     const data = Object.fromEntries(new FormData(form));
     const id = data.id;
     delete data.id;
     data.profile_id = state.profile.id;
-    await api(id ? `/api/items/${id}` : '/api/items', id ? 'PATCH' : 'POST', data);
+    const result = await api(id ? `/api/items/${id}` : '/api/items', id ? 'PATCH' : 'POST', data);
     $('itemDialog').close();
     await refresh();
     notify(id ? 'Repertoire updated.' : 'Added to your music stand.');
+    if (submitter?.value === 'practice') await window.HornLabRoom.startItem(result.item.id);
+});
+function bulkLines() {
+    return $('bulkTitles').value.split(/\r?\n/).map(title => title.trim()).filter(Boolean);
+}
+function previewBulk() {
+    const titles = bulkLines();
+    const known = new Set(state.items.map(item => item.title.toLowerCase()));
+    const skipped = [], added = [];
+    for (const title of titles) {
+        if (known.has(title.toLowerCase())) skipped.push(title);
+        else { known.add(title.toLowerCase()); added.push(title); }
+    }
+    const invalid = titles.length > 50 || titles.some(title => [...title].length > 200);
+    $('bulkPreview').textContent = invalid ? 'Use at most 50 names, each 200 characters or fewer.'
+        : !titles.length ? 'Paste or type a list to preview it.'
+        : `${added.length} new ${added.length === 1 ? 'piece' : 'pieces'}. ${skipped.length ? `Skipped (already listed or repeated): ${skipped.join('; ')}` : 'No repeated names.'}`;
+    $('bulkSave').disabled = invalid || !added.length;
+    $('bulkSave').textContent = added.length ? `Add ${added.length} ${added.length === 1 ? 'piece' : 'pieces'}` : 'Add pieces';
+}
+function openBulk() {
+    $('bulkForm').reset(); previewBulk(); openDialog('bulkDialog'); $('bulkTitles').focus();
+}
+$('bulkAddItems').onclick = openBulk;
+$('itemPasteList').onclick = () => { $('itemDialog').close(); openBulk(); };
+$('bulkTitles').addEventListener('input', previewBulk);
+handleForm('bulkForm', async form => {
+    const result = await api('/api/items/bulk', 'POST', {profile_id: state.profile.id, titles: bulkLines()});
+    $('bulkDialog').close();
+    $('search').value = ''; $('categoryFilter').value = 'all'; $('statusFilter').value = 'active';
+    location.hash = '#repertoire';
+    await refresh();
+    notify(`Added ${result.items.length} ${result.items.length === 1 ? 'piece' : 'pieces'}.${result.skipped.length ? ` Skipped ${result.skipped.length} already listed or repeated names.` : ''}`);
 });
 handleForm('goalForm', async form => {
     await api('/api/goal', 'PATCH', {
@@ -645,6 +683,12 @@ document.addEventListener('click', guard(async event => {
             behavior: 'smooth'
         });
         notify(`Metronome set to ${passage.suggested_tempo} BPM per ${passage.tempo_unit} note.`);
+    }
+    const practice = event.target.closest('[data-item-practice]');
+    if (practice) {
+        practice.disabled = true;
+        try { await window.HornLabRoom.startItem(Number(practice.dataset.itemPractice)); }
+        finally { practice.disabled = false; }
     }
     const add = event.target.closest('[data-add]');
     if (add) editItem();

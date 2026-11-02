@@ -710,6 +710,49 @@ def add_item():
     return jsonify(success=True, item=serialize_item(item)), 201
 
 
+@bp.post("/api/items/bulk")
+def add_items_bulk():
+    data = body()
+    profile = get_profile(data.get("profile_id"))
+    titles = data.get("titles")
+    if not isinstance(titles, list) or not 1 <= len(titles) <= 50:
+        raise ValueError("Enter between 1 and 50 piece names, one per line.")
+    # Validate the entire list before saving any of it.
+    titles = [text_value(title, f"Piece {index}", 200)
+              for index, title in enumerate(titles, 1)]
+    known = {item.title.casefold() for item in
+             PracticeItem.query.filter_by(profile_id=profile.id).all()}
+    added, skipped = [], []
+    for title in titles:
+        if title.casefold() in known:
+            skipped.append(title)
+            continue
+        known.add(title.casefold())
+        item = PracticeItem(profile_id=profile.id, **item_values({"title": title}))
+        db.session.add(item)
+        added.append(item)
+    db.session.commit()
+    return jsonify(success=True, items=[serialize_item(item) for item in added],
+                   skipped=skipped), 201 if added else 200
+
+
+@bp.post("/api/items/<int:item_id>/practice")
+def prepare_item_practice(item_id):
+    profile = get_profile(body().get("profile_id"))
+    item = db.first_or_404(db.select(PracticeItem).filter_by(
+        id=item_id, profile_id=profile.id, active=True))
+    passage = chosen_passage(item)
+    if passage is None:
+        # A starting point, not a measured ability or an instrument-specific goal.
+        passage = Passage(item_id=item.id, label="Whole piece",
+                          start_tempo=60, target_tempo=100, target_reps=3,
+                          tempo_unit="quarter")
+        db.session.add(passage)
+        db.session.commit()
+        passage = passage_summary(passage)
+    return jsonify(success=True, passage=passage)
+
+
 @bp.route("/api/items/<int:item_id>", methods=["PATCH", "DELETE"])
 def update_item(item_id):
     data = body()

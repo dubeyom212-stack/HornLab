@@ -129,12 +129,39 @@
             ? `Try the whole passage once at ${run.tempo} BPM. Mark that attempt below; the drill itself hasn't raised your score.`
             : 'Leave this spot here for today. Finish & save will keep the reset in your notes for next time.';
     };
-    $('roomStart').onclick = guard(async () => {
-        const passage = state.passages.find(p=>p.id===Number($('roomPassage').value));
+    async function startPassage(passage) {
         if (!passage || run || busy) return;
         if (state.practice?.started) pauseTimer();
+        location.hash = '#practice';
         run = {version:1,guidance:state.profile.guidance,profile_id:owner,token:crypto.randomUUID(),passage:{...passage},goal:$('roomGoal').value,tempo:passage.suggested_tempo,streak:0,ready:false,attempts:[],seconds:0,paused:false,note:''};
         lastTick=Date.now(); persistRun(); await setClick(); draw(); await loadTakes();
+        $('roomActive').scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    let preparing = false;
+    window.HornLabRoom = {
+        async startItem(itemId) {
+            if (preparing) return;
+            if (run || busy) {
+                location.hash = '#practice';
+                notify('Finish or discard your current practice draft before starting another piece.');
+                return;
+            }
+            const profileId = state.profile?.id;
+            if (!profileId) return;
+            preparing = true;
+            try {
+                const result = await api(`/api/items/${itemId}/practice`, 'POST', {profile_id:profileId});
+                if (state.profile?.id !== profileId) return;
+                await refresh();
+                if (state.profile?.id !== profileId) return;
+                await startPassage(result.passage);
+                if (result.passage.label === 'Whole piece') notify(`Whole-piece goal: start at ${result.passage.suggested_tempo} BPM, target ${result.passage.target_tempo}, ${result.passage.target_reps} clean repetitions. Edit this goal in Repertoire whenever you need to.`);
+            } finally { preparing = false; }
+        }
+    };
+    $('roomStart').onclick = guard(async () => {
+        const passage = state.passages.find(p=>p.id===Number($('roomPassage').value));
+        await startPassage(passage);
     });
     window.addEventListener('hornlab-coach-start',guard(async event=>{
         if(run || busy) return notify('Finish or discard your current practice draft before starting this task.');
