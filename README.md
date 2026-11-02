@@ -77,6 +77,12 @@ Python and Flask handle the backend, with Flask-SQLAlchemy and SQLite for saved 
 
 Pieces and saved sessions belong to your account. Recordings and unfinished practice stay in the browser where you made them, so they won't appear on another device. Download any takes you want to keep. The database is normally in `instance/hornlab.db`; keep a backup before updating the app.
 
+## The public project page
+
+![The About page with the changes made after feedback](docs/screenshots/about-feedback.jpg)
+
+This is the public About page. Screenshots of the signed-in practice screens still need to be added.
+
 ## Checking changes
 
 ```sh
