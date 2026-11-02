@@ -194,6 +194,7 @@ class LegacyMigrationTests(unittest.TestCase):
                         focus VARCHAR(200) NOT NULL, notes TEXT);
                     INSERT INTO practice_session VALUES (81,41,'2026-10-01',20,'Existing focus','Existing note');
                 """)
+            connection.close()
             config = {"TESTING": True, "SECRET_KEY": "legacy-test-key", "SQLALCHEMY_DATABASE_URI": f"sqlite:///{path}"}
             app = create_app(config)
             with app.app_context():
